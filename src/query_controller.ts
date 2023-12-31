@@ -21,8 +21,8 @@ export function createQueryController<Data, Variables>({
   operation,
   name = "unknown",
 }: QueryControllerOptions<Data, Variables>): QueryController<Variables> {
-  const start = createEvent<Variables>()
-  const refresh = createEvent<Variables>()
+  const start = createEvent<Variables>({ name: `${name}.start` })
+  const refresh = createEvent<Variables>({ name: `${name}.refresh` })
 
   const $stale = createStore<boolean>(true, { skipVoid: false, name: `${name}.stale` })
 
@@ -34,10 +34,8 @@ export function createQueryController<Data, Variables>({
     target: start,
   })
 
-  sample({
-    clock: start,
-    target: operation.start,
-  })
+  sample({ clock: start, target: operation.execute })
+  sample({ clock: operation.finished.success, fn: () => false, target: $stale })
 
   return {
     start,

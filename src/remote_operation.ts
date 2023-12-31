@@ -31,8 +31,15 @@ interface CreateRemoteOperationOptions<Data, Variables> {
   name?: string
 }
 
+export interface RemoteOperationInternals<Data, Variables> {
+  $variables: Store<Variables>
+  document: TypedDocumentNode<Data, Variables>
+
+  queryFx: Effect<Variables, OperationResult<Data>, ApolloError>
+}
+
 export interface RemoteOperation<Data, Variables> {
-  start: EventCallable<Variables>
+  execute: EventCallable<Variables>
 
   $status: Store<EffectState>
   /** What is the current status of my query? */
@@ -53,10 +60,7 @@ export interface RemoteOperation<Data, Variables> {
   /**
    * Internal tools for testing purposes only!
    */
-  __: {
-    queryFx: Effect<Variables, OperationResult<Data>, ApolloError>
-    $variables: Store<Variables>
-  }
+  __: RemoteOperationInternals<Data, Variables>
 }
 
 export function createRemoteOperation<Data, Variables>({
@@ -74,7 +78,7 @@ export function createRemoteOperation<Data, Variables>({
     canonizeResults: true,
   }
 
-  const start = createEvent<Params>()
+  const execute = createEvent<Params>({ name: `${name}.execute` })
 
   // Should not be used before being populated by queryFx
   const $variables = createStore<Params>({} as Params, {
@@ -92,10 +96,10 @@ export function createRemoteOperation<Data, Variables>({
   const success = queryFx.done.map(({ params, result: { data } }) => ({ variables: params, data }))
   const failure = queryFx.fail.map(({ params, error }) => ({ variables: params, error }))
 
-  sample({ clock: start, target: queryFx })
+  sample({ clock: execute, target: queryFx })
 
   return {
-    start,
+    execute,
 
     $status: readonly($status),
     status: viewStatus($status),
@@ -109,6 +113,6 @@ export function createRemoteOperation<Data, Variables>({
       ]),
     },
 
-    __: { queryFx, $variables },
+    __: { queryFx, $variables, document },
   }
 }

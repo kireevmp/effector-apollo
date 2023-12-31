@@ -47,7 +47,7 @@ describe("createRemoteOperation", () => {
       client.setLink(link)
       const scope = fork()
 
-      await allSettled(operation.start, { scope, params: {} })
+      await allSettled(operation.execute, { scope, params: {} })
 
       expect(watcher).toHaveBeenCalledWith({ status: "done", variables: {}, data })
     })
@@ -62,7 +62,7 @@ describe("createRemoteOperation", () => {
       client.setLink(link)
       const scope = fork()
 
-      await allSettled(operation.start, { scope, params: {} })
+      await allSettled(operation.execute, { scope, params: {} })
 
       expect(watcher).toHaveBeenCalledWith({ status: "fail", variables: {}, error })
     })
@@ -76,7 +76,7 @@ describe("createRemoteOperation", () => {
       client.setLink(link)
       const scope = fork()
 
-      await allSettled(operation.start, { scope, params: {} })
+      await allSettled(operation.execute, { scope, params: {} })
 
       const state = cache.readQuery({ query: document })
       expect(state).toStrictEqual(data)

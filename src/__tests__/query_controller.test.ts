@@ -45,6 +45,20 @@ describe("createQueryController", () => {
 
       expect(request).toHaveBeenCalledTimes(1)
     })
+
+    it("request completion makes query fresh", async () => {
+      expect.assertions(1)
+
+      const scope = fork({
+        values: [[controller.$stale, true]],
+        handlers: [[operation.__.queryFx, request]],
+      })
+
+      await allSettled(controller.start, { scope, params: { key: "value" } })
+
+      const stale = scope.getState(controller.$stale)
+      expect(stale).toBe(false)
+    })
   })
 
   describe("when fresh", () => {
