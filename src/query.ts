@@ -5,6 +5,7 @@ import {
   type Event,
   type EventCallable,
   type Store,
+  type StoreWritable,
 } from "effector"
 
 import {
@@ -12,6 +13,7 @@ import {
   type ApolloError,
   type DocumentNode,
   type OperationVariables,
+  type QueryOptions,
   type TypedDocumentNode,
 } from "@apollo/client"
 import { type EffectState } from "patronum/status"
@@ -29,9 +31,10 @@ interface CreateQueryOptions<Data, Variables> {
 }
 
 export interface QueryInternals<Data, Variables> extends RemoteOperationInternals<Data, Variables> {
-  execute: EventCallable<Variables>
   push: EventCallable<Data | null>
-  invalidate: EventCallable<void>
+
+  document: TypedDocumentNode<Data, Variables>
+  execute: EventCallable<Variables>
 }
 
 export interface Query<Data, Variables> {
@@ -40,7 +43,7 @@ export interface Query<Data, Variables> {
 
   $data: Store<Data | null>
   $error: Store<ApolloError | null>
-  $stale: Store<boolean>
+  $stale: StoreWritable<boolean>
 
   $status: Store<EffectState>
   /** What is the current status of my query? */
@@ -72,11 +75,21 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
 
   name = "unknown",
 }: CreateQueryOptions<Data, Variables>): Query<Data, Variables> {
-  const operation = createRemoteOperation({ client, document, name })
+  const options: QueryOptions<Variables, Data> = {
+    query: document,
+    returnPartialData: false,
+    canonizeResults: true,
+    fetchPolicy: "network-only",
+  }
+
+  const operation = createRemoteOperation<Data, Variables>({
+    handler: (variables) => client.query({ ...options, variables }).then(({ data }) => data),
+    name,
+  })
+
   const controller = createQueryController({ operation, name })
 
   const push = createEvent<Data | null>({ name: `${name}.push` })
-  const invalidate = createEvent<void>({ name: `${name}.invalidate` })
 
   const $data = createStore<Data | null>(null, { name: `${name}.data`, skipVoid: false })
   const $error = createStore<ApolloError | null>(null, { name: `${name}.error`, skipVoid: false })
@@ -88,7 +101,6 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
   })
 
   sample({ clock: push, target: $data })
-  sample({ clock: invalidate, fn: () => true, target: controller.$stale })
 
   sample({
     clock: operation.finished.failure,
@@ -110,6 +122,6 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
     finished: operation.finished,
 
     meta: { name },
-    __: { ...operation.__, execute: operation.execute, push, invalidate },
+    __: { ...operation.__, execute: operation.execute, push, document },
   }
 }

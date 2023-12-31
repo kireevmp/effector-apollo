@@ -10,13 +10,7 @@ import {
   type Store,
 } from "effector"
 
-import {
-  type ApolloClient,
-  type ApolloError,
-  type DocumentNode,
-  type QueryOptions,
-  type TypedDocumentNode,
-} from "@apollo/client"
+import { type ApolloError } from "@apollo/client"
 import { status, type EffectState } from "patronum/status"
 
 import { readonly } from "./lib/readonly"
@@ -25,24 +19,21 @@ import { viewStatus, type ViewStatus } from "./lib/view_status"
 export type OperationResult<Data> = { data: Data }
 
 interface CreateRemoteOperationOptions<Data, Variables> {
-  client: ApolloClient<unknown>
-  document: DocumentNode | TypedDocumentNode<Data, Variables>
+  handler: (variables: Variables) => Promise<Data>
 
   name?: string
 }
 
 export interface RemoteOperationInternals<Data, Variables> {
   $variables: Store<Variables>
-  document: TypedDocumentNode<Data, Variables>
-
-  queryFx: Effect<Variables, OperationResult<Data>, ApolloError>
+  executeFx: Effect<Variables, Data, ApolloError>
 }
 
 export interface RemoteOperation<Data, Variables> {
   execute: EventCallable<Variables>
 
   $status: Store<EffectState>
-  /** What is the current status of my query? */
+  /** What is the current status of my operation? */
   status: ViewStatus
 
   finished: {
@@ -58,45 +49,35 @@ export interface RemoteOperation<Data, Variables> {
   }
 
   /**
-   * Internal tools for testing purposes only!
+   * Internal tools
    */
   __: RemoteOperationInternals<Data, Variables>
 }
 
 export function createRemoteOperation<Data, Variables>({
-  client,
-  document,
+  handler,
 
   name = "unknown",
 }: CreateRemoteOperationOptions<Data, Variables>): RemoteOperation<Data, Variables> {
-  type Params = Variables
-  type Result = OperationResult<Data>
-
-  const options: QueryOptions<Variables, Data> = {
-    query: document,
-    returnPartialData: false,
-    canonizeResults: true,
-  }
-
-  const execute = createEvent<Params>({ name: `${name}.execute` })
+  const execute = createEvent<Variables>({ name: `${name}.execute` })
 
   // Should not be used before being populated by queryFx
-  const $variables = createStore<Params>({} as Params, {
+  const $variables = createStore<Variables>({} as Variables, {
     name: `${name}.variables`,
     skipVoid: false,
   })
 
-  const queryFx = createEffect<Params, Result, ApolloError>({
-    name: `${name}.query`,
-    handler: (variables) => client.query({ ...options, variables, fetchPolicy: "network-only" }),
+  const executeFx = createEffect<Variables, Data, ApolloError>({
+    name: `${name}.executeFx`,
+    handler,
   })
 
-  const $status = status(queryFx)
+  const $status = status(executeFx)
 
-  const success = queryFx.done.map(({ params, result: { data } }) => ({ variables: params, data }))
-  const failure = queryFx.fail.map(({ params, error }) => ({ variables: params, error }))
+  const success = executeFx.done.map(({ params, result: data }) => ({ variables: params, data }))
+  const failure = executeFx.fail.map(({ params, error }) => ({ variables: params, error }))
 
-  sample({ clock: execute, target: queryFx })
+  sample({ clock: execute, target: executeFx })
 
   return {
     execute,
@@ -113,6 +94,6 @@ export function createRemoteOperation<Data, Variables>({
       ]),
     },
 
-    __: { queryFx, $variables, document },
+    __: { executeFx, $variables },
   }
 }

@@ -67,6 +67,7 @@ export function watchQuery<Data, Variables>(
   sample({
     clock: updated,
     filter: ({ fromOptimisticTransaction }) => fromOptimisticTransaction,
-    target: query.__.invalidate,
+    fn: () => true,
+    target: query.$stale,
   })
 }
