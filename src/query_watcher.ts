@@ -1,18 +1,9 @@
-import {
-  attach,
-  createEffect,
-  createEvent,
-  createStore,
-  sample,
-  scopeBind,
-  type Event,
-} from "effector"
+import { attach, createEvent, sample, scopeBind, type Event } from "effector"
 
 import { type ApolloClient, type Cache } from "@apollo/client"
 
 import { Query } from "./query"
-
-type Subscription = () => void
+import { setupSubscription } from "./setup_subscription"
 
 interface WatchQueryOptions {
   client: ApolloClient<unknown>
@@ -39,19 +30,9 @@ export function watchQuery<Data, Variables>(
   type WatchOptions = Omit<Cache.WatchOptions<Data, Variables>, "callback">
 
   const name = `${query.meta.name}.watch`
-  const options: WatchOptions = {
-    query: query.__.document,
-    optimistic,
-    immediate,
-  }
+  const options: WatchOptions = { query: query.__.document, optimistic, immediate }
 
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
-
-  const $subscription = createStore<Subscription | null>(null, {
-    name: `${name}.subscription`,
-    serialize: "ignore",
-    skipVoid: false,
-  })
 
   const subscribeFx = attach({
     name: `${name}.subscriber`,
@@ -62,20 +43,7 @@ export function watchQuery<Data, Variables>(
     },
   })
 
-  const unsubFx = createEffect({
-    name: `${name}.subscriber`,
-    handler: (unsub: Subscription) => unsub(),
-  })
-
-  sample({ clock: setup, target: subscribeFx })
-  sample({ clock: subscribeFx.doneData, target: $subscription })
-
-  sample({
-    clock: [setup, teardown].filter(Boolean),
-    source: $subscription,
-    filter: Boolean,
-    target: unsubFx,
-  })
+  setupSubscription({ subscribe: subscribeFx, setup, teardown, name })
 
   /**
    * When cache is updated, push new data into query.
