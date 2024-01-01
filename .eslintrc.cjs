@@ -22,7 +22,7 @@ module.exports = {
   plugins: ["prettier", "import", "@typescript-eslint"],
   overrides: [
     {
-      files: [".eslintrc.cjs", "vitest.config.ts"],
+      files: [".eslintrc.cjs", "vitest.config.ts", "rollup.config.js"],
       parserOptions: { project: "tsconfig.node.json" },
       rules: {
         "import/no-default-export": "off",
@@ -30,6 +30,7 @@ module.exports = {
     },
   ],
   rules: {
+    "@typescript-eslint/no-explicit-any": "off",
     "import/no-default-export": "error",
     "import/consistent-type-specifier-style": ["error", "prefer-inline"],
     "import/newline-after-import": "error",

@@ -34,7 +34,7 @@ export function createQueryController<Data, Variables>({
     target: start,
   })
 
-  sample({ clock: start, target: operation.execute })
+  sample({ clock: start, target: operation.__.execute })
   sample({ clock: operation.finished.success, fn: () => false, target: $stale })
 
   return { start, refresh, $stale }

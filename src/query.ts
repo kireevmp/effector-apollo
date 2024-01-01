@@ -2,7 +2,6 @@ import {
   createEvent,
   createStore,
   sample,
-  type Event,
   type EventCallable,
   type Store,
   type StoreWritable,
@@ -16,12 +15,15 @@ import {
   type QueryOptions,
   type TypedDocumentNode,
 } from "@apollo/client"
-import { type EffectState } from "patronum/status"
 
+import { nameOf } from "./lib/name"
 import { Optional, optional } from "./lib/optional"
-import { ViewStatus } from "./lib/view_status"
 import { createQueryController } from "./query_controller"
-import { createRemoteOperation, type RemoteOperationInternals } from "./remote_operation"
+import {
+  createRemoteOperation,
+  type RemoteOperation,
+  type RemoteOperationInternals,
+} from "./remote_operation"
 
 interface CreateQueryOptions<Data, Variables> {
   client: ApolloClient<unknown>
@@ -34,32 +36,16 @@ export interface QueryInternals<Data, Variables> extends RemoteOperationInternal
   push: EventCallable<Data | null>
 
   document: TypedDocumentNode<Data, Variables>
-  execute: EventCallable<Variables>
 }
 
-export interface Query<Data, Variables> {
+export interface Query<Data, Variables> extends RemoteOperation<Data, Variables> {
   start: EventCallable<Optional<Variables>>
   refresh: EventCallable<Optional<Variables>>
 
   $data: Store<Data | null>
   $error: Store<ApolloError | null>
+
   $stale: StoreWritable<boolean>
-
-  $status: Store<EffectState>
-  /** What is the current status of my query? */
-  status: ViewStatus
-
-  finished: {
-    success: Event<{ variables: Variables; data: Data }>
-    failure: Event<{ variables: Variables; error: ApolloError }>
-
-    finally: Event<
-      { variables: Variables } & (
-        | { status: "done"; data: Data }
-        | { status: "fail"; error: ApolloError }
-      )
-    >
-  }
 
   meta: { name: string }
 
@@ -73,7 +59,7 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
   client,
   document,
 
-  name = "unknown",
+  name = nameOf(document) ?? "unknown",
 }: CreateQueryOptions<Data, Variables>): Query<Data, Variables> {
   const options: QueryOptions<Variables, Data> = {
     query: document,
@@ -109,19 +95,17 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
   })
 
   return {
+    ...operation,
+
     start: optional(controller.start),
     refresh: optional(controller.refresh),
 
     $data,
     $error,
+
     $stale: controller.$stale,
 
-    $status: operation.$status,
-    status: operation.status,
-
-    finished: operation.finished,
-
     meta: { name },
-    __: { ...operation.__, execute: operation.execute, push, document },
+    __: { ...operation.__, push, document },
   }
 }

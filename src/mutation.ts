@@ -1,16 +1,14 @@
-import { type Event, type EventCallable, type Store } from "effector"
+import { type EventCallable } from "effector"
 
-import {
-  type ApolloClient,
-  type ApolloError,
-  type DocumentNode,
-  type TypedDocumentNode,
-} from "@apollo/client"
-import { EffectState } from "patronum/status"
+import { type ApolloClient, type DocumentNode, type TypedDocumentNode } from "@apollo/client"
 
+import { nameOf } from "./lib/name"
 import { optional, type Optional } from "./lib/optional"
-import { type ViewStatus } from "./lib/view_status"
-import { createRemoteOperation, type RemoteOperationInternals } from "./remote_operation"
+import {
+  createRemoteOperation,
+  type RemoteOperation,
+  type RemoteOperationInternals,
+} from "./remote_operation"
 
 interface CreateMutationOptions<Data, Variables> {
   client: ApolloClient<unknown>
@@ -20,27 +18,11 @@ interface CreateMutationOptions<Data, Variables> {
 }
 
 interface MutationInternals<Data, Variables> extends RemoteOperationInternals<Data, Variables> {
-  execute: EventCallable<Variables>
   document: TypedDocumentNode<Data, Variables>
 }
 
-export interface Mutation<Data, Variables> {
+export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variables> {
   start: EventCallable<Optional<Variables>>
-
-  $status: Store<EffectState>
-  status: ViewStatus
-
-  finished: {
-    success: Event<{ variables: Variables; data: Data }>
-    failure: Event<{ variables: Variables; error: ApolloError }>
-
-    finally: Event<
-      { variables: Variables } & (
-        | { status: "done"; data: Data }
-        | { status: "fail"; error: ApolloError }
-      )
-    >
-  }
 
   /**
    * Internal tools
@@ -52,7 +34,7 @@ export function createMutation<Data, Variables>({
   client,
   document,
 
-  name,
+  name = nameOf(document) ?? "unknown",
 }: CreateMutationOptions<Data, Variables>) {
   const operation = createRemoteOperation<Data, Variables>({
     handler: (variables) =>
@@ -63,14 +45,11 @@ export function createMutation<Data, Variables>({
   })
 
   return {
-    start: optional(operation.execute),
+    ...operation,
 
-    $status: operation.$status,
-    status: operation.status,
-
-    finished: operation.finished,
+    start: optional(operation.__.execute),
 
     meta: { name },
-    __: { ...operation.__, document, execute: operation.execute },
+    __: { ...operation.__, document },
   }
 }

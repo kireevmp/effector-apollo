@@ -2,7 +2,7 @@ import { attach, createEvent, sample, scopeBind, type Event } from "effector"
 
 import { type ApolloClient, type Cache } from "@apollo/client"
 
-import { Query } from "./query"
+import { type Query } from "./query"
 import { setupSubscription } from "./setup_subscription"
 
 interface WatchQueryOptions {

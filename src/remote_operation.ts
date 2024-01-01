@@ -5,6 +5,8 @@ import {
   merge,
   sample,
   type Effect,
+  type EffectParams,
+  type EffectResult,
   type Event,
   type EventCallable,
   type Store,
@@ -16,8 +18,6 @@ import { status, type EffectState } from "patronum/status"
 import { readonly } from "./lib/readonly"
 import { viewStatus, type ViewStatus } from "./lib/view_status"
 
-export type OperationResult<Data> = { data: Data }
-
 interface CreateRemoteOperationOptions<Data, Variables> {
   handler: (variables: Variables) => Promise<Data>
 
@@ -26,15 +26,13 @@ interface CreateRemoteOperationOptions<Data, Variables> {
 
 export interface RemoteOperationInternals<Data, Variables> {
   $variables: Store<Variables>
+
+  execute: EventCallable<Variables>
   executeFx: Effect<Variables, Data, ApolloError>
 }
 
-export interface RemoteOperation<Data, Variables> {
-  execute: EventCallable<Variables>
-
+export interface RemoteOperation<Data, Variables> extends ViewStatus {
   $status: Store<EffectState>
-  /** What is the current status of my operation? */
-  status: ViewStatus
 
   finished: {
     success: Event<{ variables: Variables; data: Data }>
@@ -53,6 +51,13 @@ export interface RemoteOperation<Data, Variables> {
    */
   __: RemoteOperationInternals<Data, Variables>
 }
+
+export type OperationParams<Q extends RemoteOperation<any, any>> = EffectParams<
+  Q["__"]["executeFx"]
+>
+export type OperationResult<Q extends RemoteOperation<any, any>> = EffectResult<
+  Q["__"]["executeFx"]
+>
 
 export function createRemoteOperation<Data, Variables>({
   handler,
@@ -80,10 +85,8 @@ export function createRemoteOperation<Data, Variables>({
   sample({ clock: execute, target: executeFx })
 
   return {
-    execute,
-
     $status: readonly($status),
-    status: viewStatus($status),
+    ...viewStatus($status),
 
     finished: {
       success,
@@ -94,6 +97,6 @@ export function createRemoteOperation<Data, Variables>({
       ]),
     },
 
-    __: { executeFx, $variables },
+    __: { execute, executeFx, $variables },
   }
 }

@@ -3,9 +3,11 @@
     "lib": ["ESNext"],
     "sourceMap": true,
     "declaration": true,
-    "moduleResolution": "node",
+    "target": "ES2018",
+    "moduleResolution": "Node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "skipLibCheck": true,
     "baseUrl": "."
   },
   "include": ["src"]

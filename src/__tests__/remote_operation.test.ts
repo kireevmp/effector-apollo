@@ -34,7 +34,7 @@ describe("createRemoteOperation", () => {
       handler.mockResolvedValue("test")
       const scope = fork()
 
-      await allSettled(operation.execute, { scope, params: {} })
+      await allSettled(operation.__.execute, { scope, params: {} })
 
       expect(watcher).toHaveBeenCalledWith({ status: "done", variables: {}, data: "test" })
     })
@@ -47,7 +47,7 @@ describe("createRemoteOperation", () => {
 
       const scope = fork()
 
-      await allSettled(operation.execute, { scope, params: {} })
+      await allSettled(operation.__.execute, { scope, params: {} })
 
       expect(watcher).toHaveBeenCalledWith({ status: "fail", variables: {}, error })
     })
