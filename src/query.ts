@@ -17,7 +17,7 @@ import {
 } from "@apollo/client"
 
 import { nameOf } from "./lib/name"
-import { Optional, optional } from "./lib/optional"
+import { optional, type Optional } from "./lib/optional"
 import { createQueryController } from "./query_controller"
 import {
   createRemoteOperation,
@@ -47,7 +47,7 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables>
 
   $stale: StoreWritable<boolean>
 
-  meta: { name: string }
+  meta: { name: string; client: ApolloClient<unknown> }
 
   /**
    * Internal tools for testing purposes only!
@@ -105,7 +105,7 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
 
     $stale: controller.$stale,
 
-    meta: { name },
+    meta: { name, client },
     __: { ...operation.__, push, document },
   }
 }

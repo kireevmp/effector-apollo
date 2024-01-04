@@ -15,6 +15,7 @@ import {
 import { type ApolloError } from "@apollo/client"
 import { status, type EffectState } from "patronum/status"
 
+import { patchHandler } from "./dragons"
 import { readonly } from "./lib/readonly"
 import { viewStatus, type ViewStatus } from "./lib/view_status"
 
@@ -29,6 +30,8 @@ export interface RemoteOperationInternals<Data, Variables> {
 
   execute: EventCallable<Variables>
   executeFx: Effect<Variables, Data, ApolloError>
+
+  called: Event<Promise<Data>>
 }
 
 export interface RemoteOperation<Data, Variables> extends ViewStatus {
@@ -65,6 +68,7 @@ export function createRemoteOperation<Data, Variables>({
   name = "unknown",
 }: CreateRemoteOperationOptions<Data, Variables>): RemoteOperation<Data, Variables> {
   const execute = createEvent<Variables>({ name: `${name}.execute` })
+  const called = createEvent<Promise<Data>>({ name: `${name}.called` })
 
   // Should not be used before being populated by queryFx
   const $variables = createStore<Variables>({} as Variables, {
@@ -76,6 +80,8 @@ export function createRemoteOperation<Data, Variables>({
     name: `${name}.executeFx`,
     handler,
   })
+
+  patchHandler(executeFx, called)
 
   const $status = status(executeFx)
 
@@ -97,6 +103,6 @@ export function createRemoteOperation<Data, Variables>({
       ]),
     },
 
-    __: { execute, executeFx, $variables },
+    __: { execute, executeFx, called, $variables },
   }
 }

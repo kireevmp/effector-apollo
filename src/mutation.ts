@@ -24,6 +24,8 @@ interface MutationInternals<Data, Variables> extends RemoteOperationInternals<Da
 export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variables> {
   start: EventCallable<Optional<Variables>>
 
+  meta: { name: string; client: ApolloClient<unknown> }
+
   /**
    * Internal tools
    */
@@ -49,7 +51,7 @@ export function createMutation<Data, Variables>({
 
     start: optional(operation.__.execute),
 
-    meta: { name },
+    meta: { name, client },
     __: { ...operation.__, document },
   }
 }

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 
 import { allSettled, createEvent, fork } from "effector"
 
-import { gql, InMemoryCache, ApolloClient } from "@apollo/client"
+import { ApolloClient, InMemoryCache, gql } from "@apollo/client"
 import { MockLink } from "@apollo/client/testing"
 
 import { createQuery } from "../query"
@@ -31,7 +31,7 @@ describe("watchQuery", () => {
     expect.assertions(1)
 
     const query = createQuery<unknown, Record<string, never>>({ client, document })
-    watchQuery(query, { client })
+    watchQuery(query)
 
     const scope = fork()
 
@@ -50,7 +50,7 @@ describe("watchQuery", () => {
     const teardown = createEvent()
 
     const query = createQuery<unknown, Record<string, never>>({ client, document })
-    watchQuery(query, { client, setup, teardown })
+    watchQuery(query, { setup, teardown })
 
     const scope = fork()
 
@@ -73,7 +73,7 @@ describe("watchQuery", () => {
       cache.writeQuery({ query: document, data: { value: "current" }, overwrite: true })
 
       const query = createQuery<unknown, Record<string, never>>({ client, document })
-      watchQuery(query, { client, setup: appStarted })
+      watchQuery(query, { setup: appStarted })
 
       const scope = fork()
       await allSettled(appStarted, { scope })
@@ -85,23 +85,7 @@ describe("watchQuery", () => {
 
   describe("when allowing optimistic", () => {
     const query = createQuery<unknown, Record<string, never>>({ client, document })
-    watchQuery(query, { client })
-
-    it("makes query stale on update", async () => {
-      expect.assertions(1)
-
-      const scope = fork()
-
-      await allSettled(query.start, { scope })
-
-      cache.recordOptimisticTransaction(
-        (c) => c.writeQuery({ query: document, data: { value: "optimistic" } }),
-        "test-id",
-      )
-
-      const data = scope.getState(query.$stale)
-      expect(data).toBe(true)
-    })
+    watchQuery(query)
 
     it("stores optimistic data in store", async () => {
       expect.assertions(1)
@@ -122,7 +106,7 @@ describe("watchQuery", () => {
 
   describe("when skipping optimistic", () => {
     const query = createQuery<unknown, Record<string, never>>({ client, document })
-    watchQuery(query, { client, optimistic: false })
+    watchQuery(query, { optimistic: false })
 
     it("ignores optimistic data", async () => {
       expect.assertions(1)
@@ -139,5 +123,24 @@ describe("watchQuery", () => {
       const data = scope.getState(query.$data)
       expect(data).toStrictEqual({ value: "value" })
     })
+  })
+
+  it("suppots watching other client", async () => {
+    expect.assertions(1)
+
+    const otherCache = new InMemoryCache()
+    const otherClient = new ApolloClient({ link, cache: otherCache, name: "other" })
+
+    const query = createQuery<unknown, Record<string, never>>({ client, document })
+    watchQuery(query, { client: otherClient })
+
+    const scope = fork()
+
+    await allSettled(query.start, { scope })
+
+    otherCache.writeQuery({ query: document, data: { value: "new" } })
+
+    const data = scope.getState(query.$data)
+    expect(data).toStrictEqual({ value: "new" })
   })
 })

@@ -6,7 +6,7 @@ import { type Query } from "./query"
 import { setupSubscription } from "./setup_subscription"
 
 interface WatchQueryOptions {
-  client: ApolloClient<unknown>
+  client?: ApolloClient<unknown>
 
   setup?: Event<unknown>
   teardown?: Event<unknown>
@@ -18,14 +18,14 @@ interface WatchQueryOptions {
 export function watchQuery<Data, Variables>(
   query: Query<Data, Variables>,
   {
-    client,
+    client = query.meta.client,
 
     setup = query.__.execute,
     teardown,
 
     optimistic = true,
     immediate = true,
-  }: WatchQueryOptions,
+  }: WatchQueryOptions = {},
 ): void {
   type WatchOptions = Omit<Cache.WatchOptions<Data, Variables>, "callback">
 
@@ -45,28 +45,26 @@ export function watchQuery<Data, Variables>(
 
   setupSubscription({ subscribe: subscribeFx, setup, teardown, name })
 
+  const received = sample({ clock: updated, filter: ({ complete }) => complete })
+
   /**
    * When cache is updated, push new data into query.
    * We only push complete updates, and ignore "partial" data.
    * We must request partial data to be able to always subscribe. */
   sample({
-    clock: updated,
-    filter: ({ complete }) => complete,
+    clock: received,
     fn: ({ result }) => result,
     target: query.__.push,
   })
 
   /**
-   * When cache is changed by `optimistic` update, mark query as stale.
-   * This is ususally done by mutations to keep UI responsive.
+   * To avoid fetching queries that are in cache, we mark query
+   * as fresh when we get data from Cache, assuming that's not optimistic.
    *
-   * To make query fresh, either
-   * 1. skip `optimistic` by passing `false` in config, thus ignoring these, or
-   * 2. use `updateQuery` operator to bind mutation that does optimistic update
-   */
+   * These are 'trusted', just like Apollo trusts them. */
   sample({
-    clock: updated,
-    filter: ({ fromOptimisticTransaction }) => fromOptimisticTransaction,
+    clock: received,
+    filter: ({ fromOptimisticTransaction }) => !fromOptimisticTransaction,
     fn: () => true,
     target: query.$stale,
   })
