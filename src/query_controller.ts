@@ -4,8 +4,12 @@ import { equal } from "@wry/equality"
 
 import { RemoteOperation } from "./remote_operation"
 
+export interface QueryMeta {
+  force: boolean
+}
+
 interface QueryControllerOptions<Data, Variables> {
-  operation: RemoteOperation<Data, Variables>
+  operation: RemoteOperation<Data, Variables, QueryMeta>
 
   name?: string
 }
@@ -30,11 +34,16 @@ export function createQueryController<Data, Variables>({
     clock: refresh,
     source: { stale: $stale, prev: operation.__.$variables },
     filter: ({ stale, prev }, params) => stale || !equal(prev, params),
-    fn: (_, variables) => variables,
-    target: start,
+    fn: (_, variables) => ({ variables, meta: { force: false } }),
+    target: operation.__.execute,
   })
 
-  sample({ clock: start, target: operation.__.execute })
+  sample({
+    clock: start,
+    fn: (variables) => ({ variables, meta: { force: true } }),
+    target: operation.__.execute,
+  })
+
   sample({ clock: operation.finished.success, fn: () => false, target: $stale })
 
   return { start, refresh, $stale }

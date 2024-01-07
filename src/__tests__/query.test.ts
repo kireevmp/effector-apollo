@@ -107,7 +107,38 @@ describe("createQuery", () => {
 
       await allSettled(query.start, { scope, params: { key: "value" } })
 
-      expect(request).toHaveBeenCalledWith({ key: "value" })
+      expect(request).toHaveBeenCalledWith({ variables: { key: "value" }, meta: { force: true } })
+    })
+
+    it("forces a request", async () => {
+      expect.assertions(1)
+
+      client.setLink(new MockLink([{ request: { query: document }, result: request }]))
+      request.mockReturnValue({ data: { value: "value" } })
+
+      const query = createQuery<unknown, Record<string, never>>({ client, document })
+
+      const scope = fork()
+
+      await allSettled(query.start, { scope })
+
+      expect(request).toHaveBeenCalledOnce()
+    })
+  })
+
+  describe("refresh", () => {
+    it("reads from cache", async () => {
+      expect.assertions(1)
+
+      client.cache.writeQuery({ query: document, data: { value: "test" } })
+      const query = createQuery<unknown, Record<string, never>>({ client, document })
+
+      const scope = fork()
+
+      await allSettled(query.refresh, { scope })
+
+      const data = scope.getState(query.$data)
+      expect(data).toStrictEqual({ value: "test" })
     })
   })
 
@@ -136,7 +167,12 @@ describe("createQuery", () => {
 
         await allSettled(query.start, { scope })
 
-        expect(watcher).toHaveBeenCalledWith({ status: "done", data: "test", variables: {} })
+        expect(watcher).toHaveBeenCalledWith({
+          status: "done",
+          meta: { force: true },
+          data: "test",
+          variables: {},
+        })
       })
     })
 
@@ -153,7 +189,12 @@ describe("createQuery", () => {
 
         await allSettled(query.start, { scope })
 
-        expect(watcher).toHaveBeenCalledWith({ status: "fail", error, variables: {} })
+        expect(watcher).toHaveBeenCalledWith({
+          status: "fail",
+          meta: { force: true },
+          variables: {},
+          error,
+        })
       })
     })
   })

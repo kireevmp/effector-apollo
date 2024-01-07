@@ -1,4 +1,4 @@
-import { type EventCallable } from "effector"
+import { createEvent, sample, type EventCallable } from "effector"
 
 import { type ApolloClient, type DocumentNode, type TypedDocumentNode } from "@apollo/client"
 
@@ -17,14 +17,19 @@ interface CreateMutationOptions<Data, Variables> {
   name?: string
 }
 
-interface MutationInternals<Data, Variables> extends RemoteOperationInternals<Data, Variables> {
-  document: TypedDocumentNode<Data, Variables>
-}
+export type MutationMeta = void
 
-export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variables> {
+interface MutationInternals<Data, Variables>
+  extends RemoteOperationInternals<Data, Variables, MutationMeta> {}
+
+export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variables, MutationMeta> {
   start: EventCallable<Optional<Variables>>
 
-  meta: { name: string; client: ApolloClient<unknown> }
+  meta: {
+    name: string
+    client: ApolloClient<unknown>
+    document: TypedDocumentNode<Data, Variables>
+  }
 
   /**
    * Internal tools
@@ -37,21 +42,30 @@ export function createMutation<Data, Variables>({
   document,
 
   name = nameOf(document) || "unknown",
-}: CreateMutationOptions<Data, Variables>) {
-  const operation = createRemoteOperation<Data, Variables>({
-    handler: (variables) =>
+}: CreateMutationOptions<Data, Variables>): Mutation<Data, Variables> {
+  const operation = createRemoteOperation<Data, Variables, MutationMeta>({
+    handler: ({ variables }) =>
       client
         .mutate({ mutation: document, variables, fetchPolicy: "network-only" })
         .then(({ data }) => data),
     name,
   })
 
+  const start = createEvent<Variables>({ name: `${name}.start` })
+
+  sample({
+    // @ts-expect-error: `meta` is void
+    clock: start,
+    fn: (variables) => ({ variables }),
+    target: operation.__.execute,
+  })
+
   return {
     ...operation,
 
-    start: optional(operation.__.execute),
+    start: optional(start),
 
-    meta: { name, client },
-    __: { ...operation.__, document },
+    meta: { name, client, document },
+    __: { ...operation.__ },
   }
 }

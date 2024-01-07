@@ -1,5 +1,4 @@
 import {
-  attach,
   createEvent,
   createStore,
   sample,
@@ -12,7 +11,6 @@ import {
   type ApolloClient,
   type ApolloError,
   type DocumentNode,
-  type FetchPolicy,
   type OperationVariables,
   type QueryOptions,
   type TypedDocumentNode,
@@ -20,7 +18,7 @@ import {
 
 import { nameOf } from "./lib/name"
 import { optional, type Optional } from "./lib/optional"
-import { createQueryController } from "./query_controller"
+import { createQueryController, type QueryMeta } from "./query_controller"
 import {
   createRemoteOperation,
   type RemoteOperation,
@@ -40,12 +38,12 @@ interface CreateQueryOptions<Data, Variables> {
   name?: string
 }
 
-export interface QueryInternals<Data, Variables> extends RemoteOperationInternals<Data, Variables> {
+export interface QueryInternals<Data, Variables>
+  extends RemoteOperationInternals<Data, Variables, QueryMeta> {
   push: EventCallable<Data | null>
-  $policy: StoreWritable<FetchPolicy>
 }
 
-export interface Query<Data, Variables> extends RemoteOperation<Data, Variables> {
+export interface Query<Data, Variables> extends RemoteOperation<Data, Variables, QueryMeta> {
   /** Start fetching data unconditionally. */
   start: EventCallable<Optional<Variables>>
   /** Start fetching data if it is absent or stale. */
@@ -104,16 +102,14 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
   const $data = createStore<Data | null>(null, { name: `${name}.data`, skipVoid: false })
   const $error = createStore<ApolloError | null>(null, { name: `${name}.error`, skipVoid: false })
 
-  const $policy = createStore<FetchPolicy>("network-only")
-
-  const queryFx = attach({
-    name: `${name}.queryFx`,
-    source: { fetchPolicy: $policy },
-    effect: ({ fetchPolicy }, variables: Variables) =>
-      client.query({ ...options, variables, fetchPolicy }).then(({ data }) => data),
+  const operation = createRemoteOperation<Data, Variables, QueryMeta>({
+    name,
+    handler: ({ variables, meta }) =>
+      client
+        .query({ ...options, variables, fetchPolicy: meta.force ? "network-only" : "cache-first" })
+        .then(({ data }) => data),
   })
 
-  const operation = createRemoteOperation<Data, Variables>({ name, handler: queryFx })
   const controller = createQueryController({ operation, name })
 
   sample({
@@ -142,6 +138,6 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
     $stale: controller.$stale,
 
     meta: { name, client, document },
-    __: { ...operation.__, push, $policy },
+    __: { ...operation.__, push },
   }
 }

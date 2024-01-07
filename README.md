@@ -13,6 +13,8 @@ $ yarn add effector-apollo
 $ pnpm add effector-apollo
 ```
 
+Note that this library requires `effector@23` and `@apollo/client` as peer dependencies, so make sure you have them installed in your project.
+
 ## API
 
 ### `createQuery`
@@ -47,8 +49,8 @@ Creates a new query that allows you to read data from GraphQL server or cache on
 
 **Query state events:**
 
-- `finished.success`: `Event<{ variables: Variables; data: Data }>` is fired when your `Query` succeeds, providing `variables` that you called the query with, and `data` that the query has returned
-- `finished.failure`: `Event<{ variables: Variables; error: ApolloError }>` is fired when your `Query` fails, providing `variables` and the corresponding `error`
+- `finished.success`: `Event<{ variables: Variables; meta: QueryMeta, data: Data }>` is fired when your `Query` succeeds, providing `variables` that you called the query with, and `data` that the query has returned
+- `finished.failure`: `Event<{ variables: Variables; meta: QueryMeta, error: ApolloError }>` is fired when your `Query` fails, providing `variables` and the corresponding `error`
 - `finished.finally`: `Event` is fired when your `Query` finishes with either `status: "done"` or `status: "fail"`, and will provide you with `data`/`error`
 
 #### Example usage
@@ -98,7 +100,7 @@ Creates a new mutation to modify data on your GraphQL server.
   - `$succeeded`: `true` if the `Mutation` has succeeded with data
   - `$finished`: `true` if the `Mutation` has finished with either success or failure
 
-**Query state events:**
+**Mutation state events:**
 
 - `finished.success`: `Event<{ variables: Variables; data: Data }>` is fired when your `Mutation` succeeds with `data` that the GraphQL server has returned
 - `finished.failure`: `Event<{ variables: Variables; error: ApolloError }>` is fired when your `Mutation` fails with the corresponding execution `error`

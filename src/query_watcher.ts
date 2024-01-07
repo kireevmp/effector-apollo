@@ -1,6 +1,6 @@
 import { attach, createEvent, createStore, sample, scopeBind } from "effector"
 
-import { type ApolloClient, type Cache, type FetchPolicy } from "@apollo/client"
+import { type ApolloClient, type Cache } from "@apollo/client"
 
 import { type Query } from "./query"
 import { setupSubscription } from "./setup_subscription"
@@ -44,12 +44,6 @@ export function watchQuery<Data, Variables>(
     clock: [query.__.execute, query.__.$variables],
     filter: $subscribed,
     fn: (): void => undefined,
-  })
-
-  sample({
-    clock: $subscribed.updates,
-    fn: (status): FetchPolicy => (status ? "cache-first" : "network-only"),
-    target: query.__.$policy,
   })
 
   /**

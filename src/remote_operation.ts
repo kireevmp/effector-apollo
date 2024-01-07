@@ -19,34 +19,39 @@ import { patchHandler } from "./dragons"
 import { readonly } from "./lib/readonly"
 import { viewStatus, type ViewStatus } from "./lib/view_status"
 
-interface CreateRemoteOperationOptions<Data, Variables> {
-  handler: (variables: Variables) => Promise<Data>
+interface ExecutionParams<Variables, Meta> {
+  variables: Variables
+  meta: Meta
+}
+
+interface CreateRemoteOperationOptions<Data, Variables, Meta> {
+  handler: (params: ExecutionParams<Variables, Meta>) => Promise<Data>
 
   name?: string
 }
 
-export interface RemoteOperationInternals<Data, Variables> {
+export interface RemoteOperationInternals<Data, Variables, Meta> {
   $variables: Store<Variables>
 
-  execute: EventCallable<Variables>
-  executeFx: Effect<Variables, Data, ApolloError>
+  execute: EventCallable<ExecutionParams<Variables, Meta>>
+  executeFx: Effect<ExecutionParams<Variables, Meta>, Data, ApolloError>
 
   called: Event<Promise<Data>>
 }
 
-export interface RemoteOperation<Data, Variables> extends ViewStatus {
+export interface RemoteOperation<Data, Variables, Meta> extends ViewStatus {
   /** Current operation status */
   $status: Store<EffectState>
 
   /** Set of events that signal the end of your operation */
   finished: {
     /** The operation has succeeded, use `data` freely. */
-    success: Event<{ variables: Variables; data: Data }>
+    success: Event<{ variables: Variables; meta: Meta; data: Data }>
     /** The operation has failed, and you need to handle `error`. */
-    failure: Event<{ variables: Variables; error: ApolloError }>
+    failure: Event<{ variables: Variables; meta: Meta; error: ApolloError }>
 
     finally: Event<
-      { variables: Variables } & (
+      { variables: Variables; meta: Meta } & (
         | { status: "done"; data: Data }
         | { status: "fail"; error: ApolloError }
       )
@@ -56,43 +61,40 @@ export interface RemoteOperation<Data, Variables> extends ViewStatus {
   /**
    * Internal tools
    */
-  __: RemoteOperationInternals<Data, Variables>
+  __: RemoteOperationInternals<Data, Variables, Meta>
 }
 
-export type OperationParams<Q extends RemoteOperation<any, any>> = EffectParams<
+export type OperationParams<Q extends RemoteOperation<any, any, any>> = EffectParams<
   Q["__"]["executeFx"]
 >
-export type OperationResult<Q extends RemoteOperation<any, any>> = EffectResult<
+export type OperationResult<Q extends RemoteOperation<any, any, any>> = EffectResult<
   Q["__"]["executeFx"]
 >
 
-export function createRemoteOperation<Data, Variables>({
+export function createRemoteOperation<Data, Variables, Meta>({
   handler,
 
   name = "unknown",
-}: CreateRemoteOperationOptions<Data, Variables>): RemoteOperation<Data, Variables> {
-  const execute = createEvent<Variables>({ name: `${name}.execute` })
+}: CreateRemoteOperationOptions<Data, Variables, Meta>): RemoteOperation<Data, Variables, Meta> {
+  const execute = createEvent<ExecutionParams<Variables, Meta>>({ name: `${name}.execute` })
   const called = createEvent<Promise<Data>>({ name: `${name}.called` })
 
   // Should not be used before being populated by queryFx
-  const $variables = createStore<Variables>({} as Variables, {
-    name: `${name}.variables`,
-    skipVoid: false,
-  })
+  const $variables = createStore({} as Variables, { name: `${name}.variables`, skipVoid: false })
 
-  const executeFx = createEffect<Variables, Data, ApolloError>({
+  const executeFx = createEffect<ExecutionParams<Variables, Meta>, Data, ApolloError>({
     name: `${name}.executeFx`,
     handler,
   })
 
-  patchHandler(executeFx, called)
-
   const $status = status(executeFx)
 
-  const success = executeFx.done.map(({ params, result: data }) => ({ variables: params, data }))
-  const failure = executeFx.fail.map(({ params, error }) => ({ variables: params, error }))
+  const success = executeFx.done.map(({ params, result: data }) => ({ ...params, data }))
+  const failure = executeFx.fail.map(({ params, error }) => ({ ...params, error }))
 
   sample({ clock: execute, target: executeFx })
+
+  patchHandler(executeFx, called)
 
   return {
     $status: readonly($status),

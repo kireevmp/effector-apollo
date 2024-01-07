@@ -40,7 +40,7 @@ describe("createMutation", () => {
 
     await allSettled(mutation.start, { scope })
 
-    expect(request).toHaveBeenCalledWith({})
+    expect(request).toHaveBeenCalledWith({ variables: {} })
   })
 
   it("runs the mutation against Apollo", async () => {

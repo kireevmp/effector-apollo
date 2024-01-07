@@ -1,6 +1,6 @@
 {
   "name": "effector-apollo",
-  "version": "0.3.0-rc1",
+  "version": "0.3.0-rc2",
   "private": "true",
   "description": "Effector bindings for Apollo Client",
   "keywords": [],

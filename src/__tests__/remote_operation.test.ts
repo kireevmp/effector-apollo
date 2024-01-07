@@ -31,12 +31,16 @@ describe("createRemoteOperation", () => {
     it("returns data from handler", async () => {
       expect.assertions(1)
 
-      handler.mockResolvedValue("test")
+      const data = "test"
+      handler.mockResolvedValue(data)
       const scope = fork()
 
-      await allSettled(operation.__.execute, { scope, params: {} })
+      await allSettled(operation.__.execute, {
+        scope,
+        params: { variables: {}, meta: "meta" },
+      })
 
-      expect(watcher).toHaveBeenCalledWith({ status: "done", variables: {}, data: "test" })
+      expect(watcher).toHaveBeenCalledWith({ status: "done", variables: {}, meta: "meta", data })
     })
 
     it("handles error in handler", async () => {
@@ -47,9 +51,12 @@ describe("createRemoteOperation", () => {
 
       const scope = fork()
 
-      await allSettled(operation.__.execute, { scope, params: {} })
+      await allSettled(operation.__.execute, {
+        scope,
+        params: { variables: {}, meta: "meta" },
+      })
 
-      expect(watcher).toHaveBeenCalledWith({ status: "fail", variables: {}, error })
+      expect(watcher).toHaveBeenCalledWith({ status: "fail", variables: {}, meta: "meta", error })
     })
   })
 })

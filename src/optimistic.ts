@@ -15,7 +15,7 @@ export function optimistic<Data, Variables>(
   mutation: Mutation<Data, Variables>,
   { client: { cache } = mutation.meta.client, fn }: OptimisticOptions<Data, Variables>,
 ) {
-  const query = asQuery(mutation.__.document)
+  const query = asQuery(mutation.meta.document)
 
   const updateFx = attach({
     source: { variables: mutation.__.$variables },
