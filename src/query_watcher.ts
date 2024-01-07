@@ -1,6 +1,6 @@
-import { attach, createEvent, sample, scopeBind, type Event } from "effector"
+import { attach, createEvent, createStore, sample, scopeBind } from "effector"
 
-import { type ApolloClient, type Cache } from "@apollo/client"
+import { type ApolloClient, type Cache, type FetchPolicy } from "@apollo/client"
 
 import { type Query } from "./query"
 import { setupSubscription } from "./setup_subscription"
@@ -8,11 +8,7 @@ import { setupSubscription } from "./setup_subscription"
 interface WatchQueryOptions {
   client?: ApolloClient<unknown>
 
-  setup?: Event<unknown>
-  teardown?: Event<unknown>
-
   optimistic?: boolean
-  immediate?: boolean
 }
 
 export function watchQuery<Data, Variables>(
@@ -20,19 +16,18 @@ export function watchQuery<Data, Variables>(
   {
     client = query.meta.client,
 
-    setup = query.__.execute,
-    teardown,
-
     optimistic = true,
-    immediate = true,
   }: WatchQueryOptions = {},
 ): void {
   type WatchOptions = Omit<Cache.WatchOptions<Data, Variables>, "callback">
 
   const name = `${query.meta.name}.watch`
-  const options: WatchOptions = { query: query.__.document, optimistic, immediate }
+  const options: WatchOptions = { query: query.meta.document, optimistic }
 
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
+  const received = sample({ clock: updated, filter: ({ complete }) => complete })
+
+  const $subscribed = createStore(false, { skipVoid: false, name: `${name}.subscribed` })
 
   const subscribeFx = attach({
     name: `${name}.subscriber`,
@@ -43,9 +38,19 @@ export function watchQuery<Data, Variables>(
     },
   })
 
-  setupSubscription({ subscribe: subscribeFx, setup, teardown, name })
+  $subscribed.on(query.__.execute, () => true)
 
-  const received = sample({ clock: updated, filter: ({ complete }) => complete })
+  const connect = sample({
+    clock: [query.__.execute, query.__.$variables],
+    filter: $subscribed,
+    fn: (): void => undefined,
+  })
+
+  sample({
+    clock: $subscribed.updates,
+    fn: (status): FetchPolicy => (status ? "cache-first" : "network-only"),
+    target: query.__.$policy,
+  })
 
   /**
    * When cache is updated, push new data into query.
@@ -65,7 +70,9 @@ export function watchQuery<Data, Variables>(
   sample({
     clock: received,
     filter: ({ fromOptimisticTransaction }) => !fromOptimisticTransaction,
-    fn: () => true,
+    fn: () => false,
     target: query.$stale,
   })
+
+  setupSubscription({ subscribe: subscribeFx, setup: connect, name })
 }

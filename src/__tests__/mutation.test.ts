@@ -9,7 +9,7 @@ import { createMutation } from "../mutation"
 
 describe("createMutation", () => {
   const document = gql`
-    mutation {
+    mutation test {
       value
     }
   `
@@ -23,6 +23,10 @@ describe("createMutation", () => {
   beforeEach(async () => {
     client.setLink(link)
     await cache.reset({ discardWatches: true })
+  })
+
+  it("correctly derives name from operation", () => {
+    expect(mutation.meta.name).toBe("test")
   })
 
   it("executes the request", async () => {

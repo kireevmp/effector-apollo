@@ -35,10 +35,14 @@ export interface RemoteOperationInternals<Data, Variables> {
 }
 
 export interface RemoteOperation<Data, Variables> extends ViewStatus {
+  /** Current operation status */
   $status: Store<EffectState>
 
+  /** Set of events that signal the end of your operation */
   finished: {
+    /** The operation has succeeded, use `data` freely. */
     success: Event<{ variables: Variables; data: Data }>
+    /** The operation has failed, and you need to handle `error`. */
     failure: Event<{ variables: Variables; error: ApolloError }>
 
     finally: Event<

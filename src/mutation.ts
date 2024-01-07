@@ -36,7 +36,7 @@ export function createMutation<Data, Variables>({
   client,
   document,
 
-  name = nameOf(document) ?? "unknown",
+  name = nameOf(document) || "unknown",
 }: CreateMutationOptions<Data, Variables>) {
   const operation = createRemoteOperation<Data, Variables>({
     handler: (variables) =>

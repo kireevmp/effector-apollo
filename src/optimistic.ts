@@ -28,7 +28,7 @@ export function optimistic<Data, Variables>(
         id,
       )
 
-      return req.then(() => cache.removeOptimistic(id))
+      return req.finally(() => cache.removeOptimistic(id))
     },
   })
 

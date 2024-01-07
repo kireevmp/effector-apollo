@@ -2,23 +2,23 @@ import { createStore, createEffect, sample, type Event, type Effect } from "effe
 
 type Subscription = () => void
 
-interface SetupSubscriptionOptions {
-  subscribe: Effect<void, Subscription, unknown>
+interface SetupSubscriptionOptions<Params> {
+  subscribe: Effect<Params, Subscription, unknown>
 
-  setup: Event<unknown>
+  setup: Event<Params>
   teardown?: Event<unknown>
 
   name?: string
 }
 
-export function setupSubscription({
+export function setupSubscription<Params>({
   subscribe,
 
   setup,
   teardown,
 
   name = "unknown",
-}: SetupSubscriptionOptions) {
+}: SetupSubscriptionOptions<Params>) {
   const $subscription = createStore<Subscription | null>(null, {
     name: `${name}.subscription`,
     serialize: "ignore",

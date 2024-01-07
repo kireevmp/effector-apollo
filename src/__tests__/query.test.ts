@@ -9,7 +9,7 @@ import { createQuery } from "../query"
 
 describe("createQuery", () => {
   const document = gql`
-    query {
+    query test {
       value
     }
   `
@@ -26,8 +26,12 @@ describe("createQuery", () => {
     request.mockReset()
   })
 
+  it("correctly derives name from operation", () => {
+    expect(query.meta.name).toBe("test")
+  })
+
   describe("$data", () => {
-    it("is populated on success", async () => {
+    it("populates on success", async () => {
       expect.assertions(1)
 
       request.mockResolvedValue("test")
@@ -42,7 +46,7 @@ describe("createQuery", () => {
       expect(data).toBe("test")
     })
 
-    it("is reset on failure", async () => {
+    it("resets on failure", async () => {
       expect.assertions(1)
 
       request.mockRejectedValue(new ApolloError({}))
@@ -59,7 +63,7 @@ describe("createQuery", () => {
   })
 
   describe("$error", () => {
-    it("is reset on success", async () => {
+    it("resets on success", async () => {
       expect.assertions(1)
 
       request.mockResolvedValue({ data: "test" })
@@ -74,7 +78,7 @@ describe("createQuery", () => {
       expect(scope.getState(query.$error)).toBeNull()
     })
 
-    it("is reset on failure", async () => {
+    it("populates on failure", async () => {
       expect.assertions(1)
 
       const error = new ApolloError({})

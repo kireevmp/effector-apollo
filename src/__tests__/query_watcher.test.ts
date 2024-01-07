@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { allSettled, createEvent, fork } from "effector"
+import { allSettled, fork } from "effector"
 
 import { ApolloClient, InMemoryCache, gql } from "@apollo/client"
-import { MockLink } from "@apollo/client/testing"
+import { MockLink, MockedResponse } from "@apollo/client/testing"
 
 import { createQuery } from "../query"
 import { watchQuery } from "../query_watcher"
@@ -17,8 +17,8 @@ describe("watchQuery", () => {
 
   const mock = { request: { query: document }, result: { data: { value: "value" } } }
   const link = new MockLink([mock])
-  const cache = new InMemoryCache()
 
+  const cache = new InMemoryCache()
   const client = new ApolloClient({ link, cache })
 
   beforeEach(async () => {
@@ -41,46 +41,6 @@ describe("watchQuery", () => {
 
     const data = scope.getState(query.$data)
     expect(data).toStrictEqual({ value: "new" })
-  })
-
-  it("unsubscribes on teardown", async () => {
-    expect.assertions(1)
-
-    const setup = createEvent()
-    const teardown = createEvent()
-
-    const query = createQuery<unknown, Record<string, never>>({ client, document })
-    watchQuery(query, { setup, teardown })
-
-    const scope = fork()
-
-    await allSettled(setup, { scope })
-    cache.writeQuery({ query: document, data: { value: "before" } })
-
-    await allSettled(teardown, { scope })
-    cache.writeQuery({ query: document, data: { value: "after" } })
-
-    const data = scope.getState(query.$data)
-    expect(data).toStrictEqual({ value: "before" })
-  })
-
-  describe("when immediately reading", () => {
-    const appStarted = createEvent<void>()
-
-    it("populates data on subscribe", async () => {
-      expect.assertions(1)
-
-      cache.writeQuery({ query: document, data: { value: "current" }, overwrite: true })
-
-      const query = createQuery<unknown, Record<string, never>>({ client, document })
-      watchQuery(query, { setup: appStarted })
-
-      const scope = fork()
-      await allSettled(appStarted, { scope })
-
-      const data = scope.getState(query.$data)
-      expect(data).toStrictEqual({ value: "current" })
-    })
   })
 
   describe("when allowing optimistic", () => {
@@ -142,5 +102,82 @@ describe("watchQuery", () => {
 
     const data = scope.getState(query.$data)
     expect(data).toStrictEqual({ value: "new" })
+  })
+
+  it("refreshes the query when new data is received", async () => {
+    expect.assertions(1)
+
+    const one = { request: { query: document }, result: { data: { value: "old" } } }
+    const two = { request: { query: document }, result: { data: { value: "new" } } }
+
+    client.setLink(new MockLink([one, two]))
+
+    const query = createQuery<unknown, Record<string, never>>({ client, document })
+    watchQuery(query)
+
+    const scope = fork()
+    await allSettled(query.start, { scope })
+
+    await client.query({ query: document, fetchPolicy: "network-only" })
+
+    const data = scope.getState(query.$data)
+    expect(data).toStrictEqual({ value: "new" })
+  })
+
+  describe("when changing variables", () => {
+    const document = gql`
+      query test($id: String) {
+        value(id: $id)
+      }
+    `
+
+    const one = {
+      request: { query: document, variables: { id: "one" } },
+      result: vi.fn(() => ({ data: { value: "first" } })),
+    } satisfies MockedResponse
+
+    const two = {
+      request: { query: document, variables: { id: "two" } },
+      result: vi.fn(() => ({ data: { value: "second" } })),
+    } satisfies MockedResponse
+
+    beforeEach(() => {
+      one.result.mockClear()
+      two.result.mockClear()
+    })
+
+    it("makes no request when data is available in cache", async () => {
+      expect.assertions(1)
+
+      client.setLink(new MockLink([one]))
+
+      const query = createQuery<unknown, { id: string }>({ client, document })
+      watchQuery(query)
+
+      const scope = fork()
+
+      cache.writeQuery({ query: document, variables: { id: "one" }, data: { value: "first" } })
+      await allSettled(query.refresh, { scope, params: { id: "one" } })
+
+      expect(one.result).not.toHaveBeenCalled()
+    })
+
+    it("makes a single when variables changes back", async () => {
+      expect.assertions(2)
+
+      client.setLink(new MockLink([one, two]))
+
+      const query = createQuery<unknown, { id: string }>({ client, document })
+      watchQuery(query)
+
+      const scope = fork()
+
+      await allSettled(query.refresh, { scope, params: { id: "one" } })
+      await allSettled(query.refresh, { scope, params: { id: "two" } })
+      await allSettled(query.refresh, { scope, params: { id: "one" } })
+
+      expect(one.result).toHaveBeenCalledOnce()
+      expect(two.result).toHaveBeenCalledOnce()
+    })
   })
 })

@@ -3,15 +3,15 @@ import { Store } from "effector"
 import { type EffectState } from "patronum/status"
 
 export interface ViewStatus {
-  /** Has ever fetched? */
+  /** Has this operation ever fetched? */
   $idle: Store<boolean>
-  /** Is fetching right now? */
+  /** Is this operation fetching right now? */
   $pending: Store<boolean>
-  /** Has fetching failed? */
+  /** Has fetching this operation failed? */
   $failed: Store<boolean>
-  /** Has fetching succeeded? */
+  /** Has fetching this operation succeeded? */
   $succeeded: Store<boolean>
-  /** Has fetching finished? */
+  /** Has fetching this operation finished? */
   $finished: Store<boolean>
 }
 

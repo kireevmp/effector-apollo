@@ -28,6 +28,12 @@ module.exports = {
         "import/no-default-export": "off",
       },
     },
+    {
+      files: "*.test.ts",
+      rules: {
+        "@typescript-eslint/require-await": "off",
+      },
+    },
   ],
   rules: {
     "@typescript-eslint/no-explicit-any": "off",
