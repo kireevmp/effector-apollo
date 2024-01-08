@@ -33,7 +33,8 @@ Creates a new query that allows you to read data from GraphQL server or cache on
 **Commands:**
 
 - `start`: `EventCallable<Variables>` unconditionally starts your query, and _will_ send a network request
-- `refresh`: `EventCallable<Variables>` will refresh data only when its stale
+- `refresh`: `EventCallable<Variables>` will refresh the query, using cache if possible
+- `reset`: `EventCallable<void>` resets your query to its initial state
 
 **Query state:**
 
@@ -45,7 +46,6 @@ Creates a new query that allows you to read data from GraphQL server or cache on
   - `$failed`: `true` if the `Query` has failed with some `ApolloError`
   - `$succeeded`: `true` if the `Query` has succeeded with data
   - `$finished`: `true` if the `Query` has finished with either success or failure
-- `$stale`: `Store<boolean>` marking if your data is stale or fresh
 
 **Query state events:**
 
@@ -90,6 +90,7 @@ Creates a new mutation to modify data on your GraphQL server.
 **Commands:**
 
 - `start`: `EventCallable<Variables>` unconditionally starts your `Mutation`, and _will_ send a network request immediately
+- `reset`: `EventCallable<void>` resets your mutation to its initial state
 
 **Mutation state:**
 

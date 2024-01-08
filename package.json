@@ -1,6 +1,6 @@
 {
   "name": "effector-apollo",
-  "version": "0.3.0-rc2",
+  "version": "0.3.0-rc3",
   "private": "true",
   "description": "Effector bindings for Apollo Client",
   "keywords": [],
@@ -21,7 +21,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@wry/equality": "^0.5.7",
     "graphql": "^16.4.0",
     "patronum": "^2.1.0"
   },

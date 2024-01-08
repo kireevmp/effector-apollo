@@ -1,29 +1,24 @@
-import {
-  createEvent,
-  createStore,
-  sample,
-  type EventCallable,
-  type Store,
-  type StoreWritable,
-} from "effector"
+import { createEvent, createStore, sample, type EventCallable, type Store } from "effector"
 
 import {
   type ApolloClient,
   type ApolloError,
+  type DefaultContext,
   type DocumentNode,
   type OperationVariables,
   type QueryOptions,
   type TypedDocumentNode,
 } from "@apollo/client"
 
-import { nameOf } from "./lib/name"
-import { optional, type Optional } from "./lib/optional"
-import { createQueryController, type QueryMeta } from "./query_controller"
+import { nameOf } from "../lib/name"
+import { optional, type Optional } from "../lib/optional"
 import {
   createRemoteOperation,
   type RemoteOperation,
   type RemoteOperationInternals,
-} from "./remote_operation"
+} from "../remote_operation"
+
+import { createQueryController, type QueryMeta } from "./controller"
 
 interface CreateQueryOptions<Data, Variables> {
   /** Your Apollo Client instance that'll be used for making the query. */
@@ -33,6 +28,9 @@ interface CreateQueryOptions<Data, Variables> {
    * It's passed directly to Apollo with no modifications.
    */
   document: DocumentNode | TypedDocumentNode<Data, Variables>
+
+  /** Context passed to your Apollo Link. */
+  context?: DefaultContext
 
   /** The name of your query. Will be derived from `document` if abscent. */
   name?: string
@@ -48,9 +46,11 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables,
   start: EventCallable<Optional<Variables>>
   /** Start fetching data if it is absent or stale. */
   refresh: EventCallable<Optional<Variables>>
+  /** Reset query state. Clears `$data`, `$error` and `$status` to their initial values.  */
+  reset: EventCallable<void>
 
   /**
-   * Latest received data from your `Query`.
+   * Latest data received from your `Query`.
    *
    * If there was an error during fetching, or if there was no request yet,
    * this store will be `null`.
@@ -63,9 +63,6 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables,
    * the store will be `null`.
    */
   $error: Store<ApolloError | null>
-
-  /** Is data in this query stale? */
-  $stale: StoreWritable<boolean>
 
   meta: {
     name: string
@@ -88,11 +85,13 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables,
 export function createQuery<Data, Variables extends OperationVariables = OperationVariables>({
   client,
   document,
+  context,
 
   name = nameOf(document) || "unknown",
 }: CreateQueryOptions<Data, Variables>): Query<Data, Variables> {
   const options: QueryOptions<Variables, Data> = {
     query: document,
+    context,
     returnPartialData: false,
     canonizeResults: true,
   }
@@ -126,6 +125,11 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
     target: [$error, $data.reinit],
   })
 
+  sample({
+    clock: operation.reset,
+    target: [$data.reinit, $error.reinit],
+  })
+
   return {
     ...operation,
 
@@ -134,8 +138,6 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
 
     $data,
     $error,
-
-    $stale: controller.$stale,
 
     meta: { name, client, document },
     __: { ...operation.__, push },

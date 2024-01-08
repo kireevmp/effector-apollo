@@ -19,7 +19,7 @@ import { patchHandler } from "./dragons"
 import { readonly } from "./lib/readonly"
 import { viewStatus, type ViewStatus } from "./lib/view_status"
 
-interface ExecutionParams<Variables, Meta> {
+export interface ExecutionParams<Variables, Meta> {
   variables: Variables
   meta: Meta
 }
@@ -40,6 +40,9 @@ export interface RemoteOperationInternals<Data, Variables, Meta> {
 }
 
 export interface RemoteOperation<Data, Variables, Meta> extends ViewStatus {
+  /** Reset operation state to `initial` */
+  reset: EventCallable<void>
+
   /** Current operation status */
   $status: Store<EffectState>
 
@@ -76,6 +79,7 @@ export function createRemoteOperation<Data, Variables, Meta>({
 
   name = "unknown",
 }: CreateRemoteOperationOptions<Data, Variables, Meta>): RemoteOperation<Data, Variables, Meta> {
+  const reset = createEvent<void>({ name: `${name}.reset` })
   const execute = createEvent<ExecutionParams<Variables, Meta>>({ name: `${name}.execute` })
   const called = createEvent<Promise<Data>>({ name: `${name}.called` })
 
@@ -87,7 +91,7 @@ export function createRemoteOperation<Data, Variables, Meta>({
     handler,
   })
 
-  const $status = status(executeFx)
+  const $status = status(executeFx).reset(reset)
 
   const success = executeFx.done.map(({ params, result: data }) => ({ ...params, data }))
   const failure = executeFx.fail.map(({ params, error }) => ({ ...params, error }))
@@ -97,6 +101,8 @@ export function createRemoteOperation<Data, Variables, Meta>({
   patchHandler(executeFx, called)
 
   return {
+    reset,
+
     $status: readonly($status),
     ...viewStatus($status),
 

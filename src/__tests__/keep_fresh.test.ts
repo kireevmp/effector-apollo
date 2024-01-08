@@ -6,7 +6,7 @@ import { gql, InMemoryCache, ApolloClient } from "@apollo/client"
 import { MockLink } from "@apollo/client/testing"
 
 import { TriggerProtocol, keepFresh } from "../keep_fresh"
-import { createQuery } from "../query"
+import { createQuery } from "../query/query"
 
 describe("keepFresh", () => {
   const document = gql`

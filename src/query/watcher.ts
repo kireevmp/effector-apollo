@@ -2,8 +2,9 @@ import { attach, createEvent, createStore, sample, scopeBind } from "effector"
 
 import { type ApolloClient, type Cache } from "@apollo/client"
 
+import { setupSubscription } from "../setup_subscription"
+
 import { type Query } from "./query"
-import { setupSubscription } from "./setup_subscription"
 
 interface WatchQueryOptions {
   client?: ApolloClient<unknown>
@@ -54,18 +55,6 @@ export function watchQuery<Data, Variables>(
     clock: received,
     fn: ({ result }) => result,
     target: query.__.push,
-  })
-
-  /**
-   * To avoid fetching queries that are in cache, we mark query
-   * as fresh when we get data from Cache, assuming that's not optimistic.
-   *
-   * These are 'trusted', just like Apollo trusts them. */
-  sample({
-    clock: received,
-    filter: ({ fromOptimisticTransaction }) => !fromOptimisticTransaction,
-    fn: () => false,
-    target: query.$stale,
   })
 
   setupSubscription({ subscribe: subscribeFx, setup: connect, name })

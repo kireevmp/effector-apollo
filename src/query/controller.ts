@@ -1,8 +1,6 @@
-import { createEvent, createStore, sample, type EventCallable, type StoreWritable } from "effector"
+import { createEvent, sample, type EventCallable } from "effector"
 
-import { equal } from "@wry/equality"
-
-import { RemoteOperation } from "./remote_operation"
+import { RemoteOperation } from "../remote_operation"
 
 export interface QueryMeta {
   force: boolean
@@ -17,8 +15,6 @@ interface QueryControllerOptions<Data, Variables> {
 export interface QueryController<Variables> {
   start: EventCallable<Variables>
   refresh: EventCallable<Variables>
-
-  $stale: StoreWritable<boolean>
 }
 
 export function createQueryController<Data, Variables>({
@@ -28,13 +24,9 @@ export function createQueryController<Data, Variables>({
   const start = createEvent<Variables>({ name: `${name}.start` })
   const refresh = createEvent<Variables>({ name: `${name}.refresh` })
 
-  const $stale = createStore<boolean>(true, { skipVoid: false, name: `${name}.stale` })
-
   sample({
     clock: refresh,
-    source: { stale: $stale, prev: operation.__.$variables },
-    filter: ({ stale, prev }, params) => stale || !equal(prev, params),
-    fn: (_, variables) => ({ variables, meta: { force: false } }),
+    fn: (variables) => ({ variables, meta: { force: false } }),
     target: operation.__.execute,
   })
 
@@ -44,7 +36,5 @@ export function createQueryController<Data, Variables>({
     target: operation.__.execute,
   })
 
-  sample({ clock: operation.finished.success, fn: () => false, target: $stale })
-
-  return { start, refresh, $stale }
+  return { start, refresh }
 }

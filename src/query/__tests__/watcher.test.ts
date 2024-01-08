@@ -6,7 +6,7 @@ import { ApolloClient, InMemoryCache, gql } from "@apollo/client"
 import { MockLink, MockedResponse } from "@apollo/client/testing"
 
 import { createQuery } from "../query"
-import { watchQuery } from "../query_watcher"
+import { watchQuery } from "../watcher"
 
 describe("watchQuery", () => {
   const document = gql`

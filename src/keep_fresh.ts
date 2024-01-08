@@ -3,7 +3,7 @@ import { createStore, is, sample, type Event, type EventCallable, type Store } f
 import { not } from "patronum/not"
 
 import { divide } from "./lib/divide"
-import { type Query } from "./query"
+import { type Query } from "./query/query"
 
 export interface TriggerProtocol {
   "@@trigger": () => {
@@ -56,12 +56,6 @@ export function keepFresh<Data, Variables>(
   }
 
   const refresh = sample({ clock: triggers, filter: enabled })
-
-  sample({
-    clock: refresh,
-    fn: () => true,
-    target: query.$stale,
-  })
 
   sample({
     clock: refresh,
