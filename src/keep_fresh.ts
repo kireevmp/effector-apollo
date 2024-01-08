@@ -61,6 +61,6 @@ export function keepFresh<Data, Variables>(
     clock: refresh,
     source: query.__.$variables,
     filter: not(query.$idle),
-    target: query.refresh as EventCallable<Variables>,
+    target: query.start as EventCallable<Variables>,
   })
 }

@@ -7,19 +7,25 @@ import {
   type TypedDocumentNode,
 } from "@apollo/client"
 
-import { nameOf } from "./lib/name"
-import { optional, type Optional } from "./lib/optional"
+import { nameOf } from "../lib/name"
+import { optional, type Optional } from "../lib/optional"
 import {
   createRemoteOperation,
   type ExecutionParams,
   type RemoteOperation,
   type RemoteOperationInternals,
-} from "./remote_operation"
+} from "../remote_operation"
 
 interface CreateMutationOptions<Data, Variables> {
+  /** Your Apollo Client instance that'll be used for making the mutation. */
   client: ApolloClient<unknown>
+  /**
+   * A GraphQL Document with a single `mutation` for your operation.
+   * It's passed directly to Apollo with no modifications.
+   */
   document: DocumentNode | TypedDocumentNode<Data, Variables>
 
+  /** Context passed to your Apollo Link. */
   context?: DefaultContext
 
   name?: string
@@ -31,6 +37,7 @@ interface MutationInternals<Data, Variables>
   extends RemoteOperationInternals<Data, Variables, MutationMeta> {}
 
 export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variables, MutationMeta> {
+  /** Run this Mutation against the GraphQL server. */
   start: EventCallable<Optional<Variables>>
 
   meta: {
@@ -40,7 +47,7 @@ export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variabl
   }
 
   /**
-   * Internal tools
+   * Internal tools, useful for testing.
    */
   __: MutationInternals<Data, Variables>
 }

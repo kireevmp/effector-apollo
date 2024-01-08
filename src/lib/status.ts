@@ -1,6 +1,21 @@
-import { Store } from "effector"
+/** Adapted from {@link https://github.com/effector/patronum/blob/main/src/status/index.ts} */
+import { createStore, type Effect, type Store, type StoreWritable } from "effector"
 
-import { type EffectState } from "patronum/status"
+export type OperationStatus = "initial" | "pending" | "done" | "fail"
+
+export function status<Params, Done, Fail = Error>(
+  effect: Effect<Params, Done, Fail>,
+  { name = "status" }: { name?: string } = {},
+): StoreWritable<OperationStatus> {
+  const $status = createStore<OperationStatus>("initial", { name })
+
+  $status
+    .on(effect, () => "pending")
+    .on(effect.done, () => "done")
+    .on(effect.fail, () => "fail")
+
+  return $status
+}
 
 export interface ViewStatus {
   /** Has this operation ever fetched? */
@@ -15,7 +30,7 @@ export interface ViewStatus {
   $finished: Store<boolean>
 }
 
-export function viewStatus($status: Store<EffectState>): ViewStatus {
+export function viewStatus($status: Store<OperationStatus>): ViewStatus {
   return {
     $idle: $status.map((status) => status === "initial"),
     $pending: $status.map((status) => status === "pending"),

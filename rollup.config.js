@@ -8,5 +8,5 @@ export default {
     { file: "dist/index.cjs", format: "cjs" },
   ],
   plugins: [typescript({ transpiler: "typescript" })],
-  external: ["effector", "graphql", "@wry/equality", /patronum(\/\w+)?/],
+  external: ["effector", "graphql", /patronum(\/\w+)?/],
 }

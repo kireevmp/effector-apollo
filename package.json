@@ -1,16 +1,27 @@
 {
   "name": "effector-apollo",
-  "version": "0.3.0-rc3",
-  "private": "true",
+  "version": "0.3.0-rc4",
   "description": "Effector bindings for Apollo Client",
-  "keywords": [],
+  "keywords": [
+    "effector",
+    "apollo",
+    "react"
+  ],
+  "homepage": "https://github.com/kireevmp/effector-apollo#readme",
+  "bugs": {
+    "url": "https://github.com/kireevmp/effector-apollo/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kireevmp/effector-apollo.git"
+  },
+  "license": "ISC",
   "author": {
     "name": "Kireev Mikhail"
   },
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     }
@@ -18,7 +29,8 @@
   "types": "./dist/index.d.mts",
   "scripts": {
     "build": "rollup --config",
-    "test": "vitest"
+    "test": "vitest",
+    "prepack": "pnpm build"
   },
   "dependencies": {
     "graphql": "^16.4.0",

@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { allSettled, fork } from "effector"
 
-import { ApolloClient, InMemoryCache, gql } from "@apollo/client"
+import { ApolloClient, InMemoryCache, TypedDocumentNode, gql } from "@apollo/client"
 import { MockLink } from "@apollo/client/testing"
 
 import { createMutation } from "../mutation"
 
 describe("createMutation", () => {
-  const document = gql`
+  const document: TypedDocumentNode<unknown, Record<string, never>> = gql`
     mutation test {
       value
     }
@@ -18,7 +18,7 @@ describe("createMutation", () => {
   const cache = new InMemoryCache()
 
   const client = new ApolloClient({ link, cache })
-  const mutation = createMutation<unknown, Record<string, never>>({ client, document })
+  const mutation = createMutation({ client, document })
 
   beforeEach(async () => {
     client.setLink(link)
@@ -60,5 +60,21 @@ describe("createMutation", () => {
     expect(watcher).toHaveBeenCalledWith({ status: "done", variables: {}, data: { value: "test" } })
 
     unsub()
+  })
+
+  it("passes the context to Apollo", async () => {
+    expect.assertions(1)
+
+    const mutation = createMutation({ client, document, context: { key: "value" } })
+    const mock = { request: { query: document }, result: { data: { value: "test" } } }
+
+    const spy = vi.spyOn(client, "mutate")
+    client.setLink(new MockLink([mock]))
+
+    const scope = fork()
+
+    await allSettled(mutation.start, { scope })
+
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ context: { key: "value" } }))
   })
 })

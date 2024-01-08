@@ -13,11 +13,10 @@ import {
 } from "effector"
 
 import { type ApolloError } from "@apollo/client"
-import { status, type EffectState } from "patronum/status"
 
 import { patchHandler } from "./dragons"
 import { readonly } from "./lib/readonly"
-import { viewStatus, type ViewStatus } from "./lib/view_status"
+import { status, viewStatus, type OperationStatus, type ViewStatus } from "./lib/status"
 
 export interface ExecutionParams<Variables, Meta> {
   variables: Variables
@@ -40,13 +39,13 @@ export interface RemoteOperationInternals<Data, Variables, Meta> {
 }
 
 export interface RemoteOperation<Data, Variables, Meta> extends ViewStatus {
-  /** Reset operation state to `initial` */
+  /** Reset operation state to `initial`. */
   reset: EventCallable<void>
 
-  /** Current operation status */
-  $status: Store<EffectState>
+  /** Current operation status. */
+  $status: Store<OperationStatus>
 
-  /** Set of events that signal the end of your operation */
+  /** Set of events that signal the end of your operation. */
   finished: {
     /** The operation has succeeded, use `data` freely. */
     success: Event<{ variables: Variables; meta: Meta; data: Data }>
@@ -62,7 +61,7 @@ export interface RemoteOperation<Data, Variables, Meta> extends ViewStatus {
   }
 
   /**
-   * Internal tools
+   * Internal tools, useful for testing.
    */
   __: RemoteOperationInternals<Data, Variables, Meta>
 }
@@ -91,7 +90,7 @@ export function createRemoteOperation<Data, Variables, Meta>({
     handler,
   })
 
-  const $status = status(executeFx).reset(reset)
+  const $status = status(executeFx, { name: `${name}.status` }).reset(reset)
 
   const success = executeFx.done.map(({ params, result: data }) => ({ ...params, data }))
   const failure = executeFx.fail.map(({ params, error }) => ({ ...params, error }))

@@ -71,7 +71,7 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables,
   }
 
   /**
-   * Internal tools for testing purposes only!
+   * Internal tools, useful for testing.
    */
   __: QueryInternals<Data, Variables>
 }

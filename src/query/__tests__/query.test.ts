@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { allSettled, fork } from "effector"
 
-import { ApolloClient, ApolloError, InMemoryCache, gql } from "@apollo/client"
+import { ApolloClient, ApolloError, InMemoryCache, TypedDocumentNode, gql } from "@apollo/client"
 import { MockLink } from "@apollo/client/testing"
 
 import { createQuery } from "../query"
 
 describe("createQuery", () => {
-  const document = gql`
+  const document: TypedDocumentNode<unknown, Record<string, never>> = gql`
     query test {
       value
     }
@@ -18,7 +18,7 @@ describe("createQuery", () => {
   const cache = new InMemoryCache()
 
   const client = new ApolloClient({ link, cache })
-  const query = createQuery<unknown, Record<string, never>>({ client, document })
+  const query = createQuery({ client, document })
 
   const request = vi.fn()
 
@@ -196,6 +196,22 @@ describe("createQuery", () => {
           error,
         })
       })
+    })
+
+    it("passes the context to Apollo", async () => {
+      expect.assertions(1)
+
+      const query = createQuery({ client, document, context: { key: "value" } })
+      const mock = { request: { query: document }, result: { data: { value: "test" } } }
+
+      const spy = vi.spyOn(client, "query")
+      client.setLink(new MockLink([mock]))
+
+      const scope = fork()
+
+      await allSettled(query.start, { scope })
+
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ context: { key: "value" } }))
     })
   })
 })
