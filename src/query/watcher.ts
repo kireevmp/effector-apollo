@@ -29,7 +29,7 @@ export function watchQuery<Data, Variables>(
   const $client = storify(client, { name: `${name}.client` })
 
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
-  const received = sample({ clock: updated, filter: ({ complete }) => complete })
+  const received = sample({ clock: updated, filter: ({ complete }) => Boolean(complete) })
 
   const $subscribed = createStore(false, { skipVoid: false, name: `${name}.subscribed` })
 
@@ -56,7 +56,7 @@ export function watchQuery<Data, Variables>(
    * We must request partial data to be able to always subscribe. */
   sample({
     clock: received,
-    fn: ({ result }) => result,
+    fn: ({ result }) => result!,
     target: query.__.push,
   })
 

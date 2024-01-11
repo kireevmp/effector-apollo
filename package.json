@@ -31,7 +31,8 @@
   "scripts": {
     "build": "rollup --config",
     "prepack": "pnpm build",
-    "test": "vitest"
+    "test": "vitest --typecheck",
+    "test:code": "vitest"
   },
   "dependencies": {
     "graphql": "^16.4.0",

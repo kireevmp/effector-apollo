@@ -5,6 +5,6 @@ export function nameOf(document: DocumentNode): string | null {
     document.definitions.find(
       (node): node is OperationDefinitionNode =>
         node.kind === Kind.OPERATION_DEFINITION && !!node.name,
-    )?.name.value ?? null
+    )?.name?.value ?? null
   )
 }

@@ -1,9 +1,10 @@
-import { createEvent, sample, type EventCallable, Store, attach } from "effector"
+import { attach, createEvent, sample, type EventCallable, type Store } from "effector"
 
 import {
   DefaultContext,
   type ApolloClient,
   type DocumentNode,
+  type OperationVariables,
   type TypedDocumentNode,
 } from "@apollo/client"
 
@@ -53,7 +54,7 @@ export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variabl
   __: MutationInternals<Data, Variables>
 }
 
-export function createMutation<Data, Variables>({
+export function createMutation<Data, Variables extends OperationVariables = OperationVariables>({
   client,
   document,
   context,
@@ -67,7 +68,7 @@ export function createMutation<Data, Variables>({
     effect: ({ client }, { variables }: ExecutionParams<Variables, MutationMeta>) =>
       client
         .mutate({ mutation: document, context, variables, fetchPolicy: "network-only" })
-        .then(({ data }) => data),
+        .then(({ data }) => data!),
   })
 
   const operation = createRemoteOperation<Data, Variables, MutationMeta>({ handler, name })

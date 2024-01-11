@@ -1,6 +1,6 @@
 {
   "semi": false,
-  "quoteProps": "as-needed",
+  "quoteProps": "consistent",
   "singleQuote": false,
   "printWidth": 100
 }
