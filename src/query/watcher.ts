@@ -1,13 +1,14 @@
-import { attach, createEvent, createStore, sample, scopeBind } from "effector"
+import { Store, attach, createEvent, createStore, sample, scopeBind } from "effector"
 
 import { type ApolloClient, type Cache } from "@apollo/client"
 
+import { storify } from "../lib/storify"
 import { setupSubscription } from "../setup_subscription"
 
 import { type Query } from "./query"
 
 interface WatchQueryOptions {
-  client?: ApolloClient<unknown>
+  client?: ApolloClient<unknown> | Store<ApolloClient<unknown>>
 
   optimistic?: boolean
 }
@@ -25,6 +26,8 @@ export function watchQuery<Data, Variables>(
   const name = `${query.meta.name}.watch`
   const options: WatchOptions = { query: query.meta.document, optimistic }
 
+  const $client = storify(client, { name: `${name}.client` })
+
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
   const received = sample({ clock: updated, filter: ({ complete }) => complete })
 
@@ -32,8 +35,8 @@ export function watchQuery<Data, Variables>(
 
   const subscribeFx = attach({
     name: `${name}.subscriber`,
-    source: query.__.$variables,
-    effect(variables) {
+    source: { variables: query.__.$variables, client: $client },
+    effect({ variables, client }) {
       const callback = scopeBind(updated, { safe: true })
       return client.cache.watch({ ...options, variables, callback })
     },

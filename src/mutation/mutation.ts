@@ -1,4 +1,4 @@
-import { createEvent, sample, type EventCallable } from "effector"
+import { createEvent, sample, type EventCallable, Store, attach } from "effector"
 
 import {
   DefaultContext,
@@ -9,6 +9,7 @@ import {
 
 import { nameOf } from "../lib/name"
 import { optional, type Optional } from "../lib/optional"
+import { storify } from "../lib/storify"
 import {
   createRemoteOperation,
   type ExecutionParams,
@@ -18,7 +19,7 @@ import {
 
 interface CreateMutationOptions<Data, Variables> {
   /** Your Apollo Client instance that'll be used for making the mutation. */
-  client: ApolloClient<unknown>
+  client: ApolloClient<unknown> | Store<ApolloClient<unknown>>
   /**
    * A GraphQL Document with a single `mutation` for your operation.
    * It's passed directly to Apollo with no modifications.
@@ -42,7 +43,7 @@ export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variabl
 
   meta: {
     name: string
-    client: ApolloClient<unknown>
+    client: Store<ApolloClient<unknown>>
     document: TypedDocumentNode<Data, Variables>
   }
 
@@ -59,13 +60,17 @@ export function createMutation<Data, Variables>({
 
   name = nameOf(document) || "unknown",
 }: CreateMutationOptions<Data, Variables>): Mutation<Data, Variables> {
-  const operation = createRemoteOperation<Data, Variables, MutationMeta>({
-    handler: ({ variables }) =>
+  const $client = storify(client, { name: `${name}.client` })
+
+  const handler = attach({
+    source: { client: $client },
+    effect: ({ client }, { variables }: ExecutionParams<Variables, MutationMeta>) =>
       client
         .mutate({ mutation: document, context, variables, fetchPolicy: "network-only" })
         .then(({ data }) => data),
-    name,
   })
+
+  const operation = createRemoteOperation<Data, Variables, MutationMeta>({ handler, name })
 
   const start = createEvent<Variables>({ name: `${name}.start` })
 
@@ -80,7 +85,7 @@ export function createMutation<Data, Variables>({
 
     start: optional(start),
 
-    meta: { name, client, document },
+    meta: { name, client: $client, document },
     __: { ...operation.__ },
   }
 }

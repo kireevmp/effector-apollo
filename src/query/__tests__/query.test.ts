@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { allSettled, fork } from "effector"
+import { allSettled, createStore, fork } from "effector"
 
 import { ApolloClient, ApolloError, InMemoryCache, TypedDocumentNode, gql } from "@apollo/client"
 import { MockLink } from "@apollo/client/testing"
@@ -212,6 +212,26 @@ describe("createQuery", () => {
       await allSettled(query.start, { scope })
 
       expect(spy).toHaveBeenCalledWith(expect.objectContaining({ context: { key: "value" } }))
+    })
+
+    it("uses the client from store", async () => {
+      expect.assertions(1)
+
+      const fn = vi.fn(() => ({ data: { value: "test" } }))
+      const mock = { request: { query: document }, result: fn }
+
+      const link = new MockLink([mock])
+
+      const $client = createStore<ApolloClient<unknown>>(null as never)
+      const query = createQuery({ client: $client, document })
+
+      const scope = fork({
+        values: [[$client, new ApolloClient({ link, cache })]],
+      })
+
+      await allSettled(query.start, { scope })
+
+      expect(fn).toHaveBeenCalledOnce()
     })
   })
 })

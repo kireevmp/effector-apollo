@@ -1,4 +1,4 @@
-import { createEvent, createStore, sample, type EventCallable, type Store } from "effector"
+import { attach, createEvent, createStore, sample, type EventCallable, type Store } from "effector"
 
 import {
   type ApolloClient,
@@ -12,8 +12,10 @@ import {
 
 import { nameOf } from "../lib/name"
 import { optional, type Optional } from "../lib/optional"
+import { storify } from "../lib/storify"
 import {
   createRemoteOperation,
+  type ExecutionParams,
   type RemoteOperation,
   type RemoteOperationInternals,
 } from "../remote_operation"
@@ -22,7 +24,7 @@ import { createQueryController, type QueryMeta } from "./controller"
 
 interface CreateQueryOptions<Data, Variables> {
   /** Your Apollo Client instance that'll be used for making the query. */
-  client: ApolloClient<unknown>
+  client: ApolloClient<unknown> | Store<ApolloClient<unknown>>
   /**
    * A GraphQL Document with a single `query` for your operation.
    * It's passed directly to Apollo with no modifications.
@@ -66,7 +68,7 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables,
 
   meta: {
     name: string
-    client: ApolloClient<unknown>
+    client: Store<ApolloClient<unknown>>
     document: TypedDocumentNode<Data, Variables>
   }
 
@@ -98,16 +100,20 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
 
   const push = createEvent<Data | null>({ name: `${name}.push` })
 
+  const $client = storify(client, { name: `${name}.client` })
+
   const $data = createStore<Data | null>(null, { name: `${name}.data`, skipVoid: false })
   const $error = createStore<ApolloError | null>(null, { name: `${name}.error`, skipVoid: false })
 
-  const operation = createRemoteOperation<Data, Variables, QueryMeta>({
-    name,
-    handler: ({ variables, meta }) =>
+  const handler = attach({
+    source: { client: $client },
+    effect: ({ client }, { variables, meta }: ExecutionParams<Variables, QueryMeta>) =>
       client
         .query({ ...options, variables, fetchPolicy: meta.force ? "network-only" : "cache-first" })
         .then(({ data }) => data),
   })
+
+  const operation = createRemoteOperation<Data, Variables, QueryMeta>({ name, handler })
 
   const controller = createQueryController({ operation, name })
 
@@ -139,7 +145,7 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
     $data,
     $error,
 
-    meta: { name, client, document },
+    meta: { name, client: $client, document },
     __: { ...operation.__, push },
   }
 }

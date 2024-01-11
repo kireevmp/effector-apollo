@@ -23,7 +23,7 @@ Creates a new query that allows you to read data from GraphQL server or cache on
 
 **Options:**
 
-- `client`: `ApolloClient` that the query will use to fetch data
+- `client`: `ApolloClient | Store<ApolloClient>` that the query will use to fetch data
 - `document`: `DocumentNode` describing your query
 - `context`: `DefaultContext?` allows you to (optionally) provide arbitrary context to your Apollo Link
 
@@ -81,7 +81,7 @@ Creates a new mutation to modify data on your GraphQL server.
 
 **Options:**
 
-- `client`: `ApolloClient` that the mutation will use to fetch data
+- `client`: `ApolloClient | Store<ApolloClient>` that the mutation will use to fetch data
 - `document`: `DocumentNode` describing your mutation
 - `context`: `DefaultContext?` allows you to (optionally) provide arbitrary context to your Apollo Link
 
@@ -118,8 +118,8 @@ This operator allows you to connect `Query` to cache if you expect other parts o
 **Options:**
 
 - `query`: `Query` that you want to subscribe to cache
-- `client?`: `ApolloClient` to use cache from. Will use the client from `createQuery` if not provided
 - `optimistic?`: `boolean` can be set to `false` to disable reading `optimistic` cache
+- `client?`: `ApolloClient | Store<ApolloClient>` to use cache from. Will use the client from `createQuery` if not provided
 
 ### `optimistic`
 
@@ -129,7 +129,7 @@ This operator allows you to connect `Query` to cache if you expect other parts o
 
 - `mutation`: `Mutation` that you want to define an optimistic response for
 - `fn`: `Variables => Data` function that constructs an optimistic response for a mutation
-- `client?`: `ApolloClient` to write response to. Will use the client from `createMutation` if not provided
+- `client?`: `ApolloClient | Store<ApolloClient>` to write response to. Will use the client from `createMutation` if not provided
 
 ## 💬 Pick your library
 
