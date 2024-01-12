@@ -21,6 +21,7 @@ import {
 import { Kind, OperationTypeNode, type FragmentDefinitionNode } from "graphql"
 
 import { fragmentName } from "../lib/name"
+import { readonly } from "../lib/readonly"
 import { storify } from "../lib/storify"
 import { setupSubscription } from "../setup_subscription"
 
@@ -39,6 +40,15 @@ interface CreateFragmentBindingOptions<Data, Variables> {
    * this will will be your `appStarted` event.
    */
   setup: Event<void>
+  /**
+   * A trigger to teardown the binding.
+   *
+   * Acts as a full `reset` action on binding, stopping listening to
+   * Apollo Cache and clearing `$data`.
+   *
+   * You must then call `setup` again to re-activate the binding.
+   */
+  teardown?: Event<void>
 
   /**
    * A map of Variables that your fragment uses.
@@ -70,6 +80,13 @@ interface FragmentBinding<Data, Variables> {
    */
   $data: Store<Data | null>
 
+  /**
+   * Is this binding active?
+   *
+   * Only active binding is fully set up, watches cache and keeps `$data` in sync.
+   */
+  $active: Store<boolean>
+
   meta: {
     name: string
     document: TypedDocumentNode<Data, Variables>
@@ -95,6 +112,7 @@ export function createFragmentBinding<
   document,
 
   setup,
+  teardown,
 
   id,
   variables,
@@ -116,6 +134,7 @@ export function createFragmentBinding<
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
   const subscribe = createEvent<void>({ name: `${name}.subscribe` })
 
+  const $active = createStore<boolean>(false, { skipVoid: false, name: `${name}.enabled` })
   const $data = createStore<Data | null>(null, { skipVoid: false, name: `${name}.data` })
 
   const $client = storify(client, { name: `${name}.client` })
@@ -136,21 +155,30 @@ export function createFragmentBinding<
     },
   })
 
+  $active.on(setup, () => true)
+
+  if (teardown) {
+    $active.on(teardown, () => false)
+    $data.reset(teardown)
+  }
+
   sample({
-    clock: [setup, $client.updates, $id.updates, $variables.updates],
+    clock: [$active, $client, $id, $variables],
+    filter: $active,
     target: subscribe,
   })
 
   sample({
     clock: updated,
-    fn: ({ complete, result }) => (complete ? result! : null),
+    fn: ({ complete, result }) => (complete && result ? result : null),
     target: $data,
   })
 
-  setupSubscription({ setup: subscribe, subscribe: subscribeFx, name })
+  setupSubscription({ setup: subscribe, teardown, subscribe: subscribeFx, name })
 
   return {
-    $data,
+    $data: readonly($data),
+    $active: readonly($active),
 
     meta: { name, document, client: $client },
   }

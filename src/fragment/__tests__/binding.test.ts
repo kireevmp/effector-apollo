@@ -24,6 +24,8 @@ describe("createFragmentBinding", () => {
   })
 
   it("infers name from fragment", () => {
+    expect.assertions(1)
+
     const $id = createStore("User:1")
     const binding = createFragmentBinding({ client, document, setup, id: $id })
 
@@ -31,6 +33,8 @@ describe("createFragmentBinding", () => {
   })
 
   it("watches changes", async () => {
+    expect.assertions(1)
+
     const $id = createStore("User:1")
 
     const binding = createFragmentBinding({ client, document, setup, id: $id })
@@ -48,7 +52,68 @@ describe("createFragmentBinding", () => {
     expect(data).toStrictEqual({ id: "1", name: "test" })
   })
 
+  it("skips changes when torn down", async () => {
+    expect.assertions(1)
+
+    const $id = createStore("User:1")
+    const teardown = createEvent<void>()
+
+    const binding = createFragmentBinding({ client, document, setup, teardown, id: $id })
+    const scope = fork()
+
+    await allSettled(setup, { scope })
+
+    cache.writeFragment({
+      fragment: document,
+      id: "User:1",
+      data: { __typename: "User", id: "1", name: "old" },
+    })
+
+    await allSettled(teardown, { scope })
+
+    cache.writeFragment({
+      fragment: document,
+      id: "User:1",
+      data: { __typename: "User", id: "1", name: "new" },
+    })
+
+    const data = scope.getState(binding.$data)
+    expect(data).toBeNull()
+  })
+
+  it("becomes active on setup", async () => {
+    expect.assertions(1)
+
+    const $id = createStore("User:1")
+
+    const binding = createFragmentBinding({ client, document, setup, id: $id })
+    const scope = fork()
+
+    await allSettled(setup, { scope })
+
+    const data = scope.getState(binding.$active)
+    expect(data).toBe(true)
+  })
+
+  it("becomes inactive on teardown", async () => {
+    expect.assertions(1)
+
+    const $id = createStore("User:1")
+    const teardown = createEvent<void>()
+
+    const binding = createFragmentBinding({ client, document, setup, teardown, id: $id })
+    const scope = fork()
+
+    await allSettled(setup, { scope })
+    await allSettled(teardown, { scope })
+
+    const data = scope.getState(binding.$active)
+    expect(data).toBe(false)
+  })
+
   it("reads data on subscribe", async () => {
+    expect.assertions(1)
+
     cache.restore({ "User:1": { __typename: "User", id: "1", name: "test" } })
 
     const $id = createStore("User:1")
@@ -64,6 +129,8 @@ describe("createFragmentBinding", () => {
 
   describe("resubscribes when", () => {
     it("receives new variables", async () => {
+      expect.assertions(1)
+
       const document = gql`
         fragment complexUser on User {
           id
@@ -95,6 +162,8 @@ describe("createFragmentBinding", () => {
     })
 
     it("receives new id", async () => {
+      expect.assertions(1)
+
       cache.restore({
         "User:1": { __typename: "User", id: "1", name: "first" },
         "User:2": { __typename: "User", id: "2", name: "second" },
@@ -117,6 +186,8 @@ describe("createFragmentBinding", () => {
 
   describe("supports identifying by key fields", () => {
     it("for default id", async () => {
+      expect.assertions(1)
+
       const $id = createStore({ id: "1" })
 
       cache.restore({ "User:1": { __typename: "User", id: "1", name: "test" } })
@@ -134,6 +205,8 @@ describe("createFragmentBinding", () => {
       const typePolicies = { User: { keyFields: ["id", "name"] } }
 
       it("with inferred typename", async () => {
+        expect.assertions(1)
+
         const cache = new InMemoryCache({ addTypename: false, typePolicies })
         const client = new ApolloClient({ cache })
 
@@ -156,6 +229,8 @@ describe("createFragmentBinding", () => {
   })
 
   it("when optimistic is enabled reads optimistic data", async () => {
+    expect.assertions(1)
+
     cache.restore({ "User:1": { __typename: "User", id: "1", name: "test" } })
 
     const $id = createStore("User:1")
@@ -180,6 +255,8 @@ describe("createFragmentBinding", () => {
   })
 
   it("when optimistic is disabled skips optimistic data", async () => {
+    expect.assertions(1)
+
     cache.restore({ "User:1": { __typename: "User", id: "1", name: "test" } })
 
     const $id = createStore("User:1")
