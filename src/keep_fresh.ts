@@ -3,6 +3,7 @@ import { createStore, is, sample, type Event, type EventCallable, type Store } f
 import { not } from "patronum/not"
 
 import { divide } from "./lib/divide"
+import { storify } from "./lib/storify"
 import { type Query } from "./query/query"
 
 export interface TriggerProtocol {
@@ -16,18 +17,47 @@ export interface TriggerProtocol {
 type Trigger = Event<any> | TriggerProtocol
 
 interface KeepFreshOptions {
-  enabled: Store<boolean>
-  invalidateOn: Trigger[]
+  /**
+   * Controls whether the automatic refresh is enabled.
+   *
+   * By default, `keepFresh` will be always enabled.
+   */
+  enabled?: Store<boolean>
+
+  /**
+   * A list of triggers to start the query and launch a network request.
+   *
+   * Can either be a `Event` or a `TriggerProtocol`
+   * ({@link https://withease.pages.dev/protocols/trigger | see documentation}).
+   */
+  triggers: Trigger[]
 }
 
+/**
+ * Enables automatic refreshes for your query,
+ * ensuring that the data stays up-to-date
+ * in response to specific events or triggers.
+ *
+ * @remarks
+ *  - By default, `keepFresh` is always enabled. You can optionally control its enabled state using the `enabled` option.
+ *  - The query will be refetched when any of the specified triggers fire.
+ *
+ * @param query - The Query you want to keep fresh.
+ * @param options - Options for customizing the refresh behavior.
+ */
 export function keepFresh<Data, Variables>(
   query: Query<Data, Variables>,
-  { enabled, invalidateOn }: KeepFreshOptions,
+  { enabled, triggers }: KeepFreshOptions,
 ) {
   const name = `${query.meta.name}.fresh`
 
+  const $enabled = storify(enabled ?? true, {
+    name: `${name}.enabled`,
+    sid: `apollo.${name}.$enabled`,
+  })
+
   // eslint-disable-next-line @typescript-eslint/unbound-method
-  const [triggers, protocolSources] = divide<Event<any>, TriggerProtocol>(invalidateOn, is.event)
+  const [events, protocolSources] = divide<Event<any>, TriggerProtocol>(triggers, is.event)
 
   if (protocolSources.length > 0) {
     const protocols = protocolSources.map((proto) => proto["@@trigger"]())
@@ -47,21 +77,22 @@ export function keepFresh<Data, Variables>(
     })
 
     sample({
-      clock: enabled.updates,
-      filter: not(enabled),
+      clock: $enabled.updates,
+      filter: not($enabled),
       fn: () => false,
       target: [...protocols.map(({ teardown }) => teardown), $setup],
     })
 
-    triggers.push(...protocols.map(({ fired }) => fired))
+    events.push(...protocols.map(({ fired }) => fired))
   }
 
-  const refresh = sample({ clock: triggers, filter: enabled })
+  const refresh = sample({ clock: events, filter: $enabled })
 
   sample({
     clock: refresh,
     source: query.__.$variables,
     filter: not(query.$idle),
+    // query.refresh would read cache, but we want to force a request
     target: query.start as EventCallable<Variables>,
   })
 }

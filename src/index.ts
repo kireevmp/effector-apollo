@@ -6,4 +6,6 @@ export { optimistic } from "./mutation/optimistic"
 
 export { createFragmentBinding, type FragmentBinding } from "./fragment/binding"
 
+export { keepFresh } from "./keep_fresh"
+
 export { type OperationParams, type OperationResult } from "./remote_operation"

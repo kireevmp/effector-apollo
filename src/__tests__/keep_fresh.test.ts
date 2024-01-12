@@ -20,7 +20,6 @@ describe("keepFresh", () => {
 
   const client = new ApolloClient({ link, cache })
 
-  const $enabled = createStore(true)
   const trigger = createEvent<void>()
 
   const request = vi.fn()
@@ -35,7 +34,7 @@ describe("keepFresh", () => {
 
     const query = createQuery<unknown, Record<string, never>>({ client, document })
 
-    keepFresh(query, { enabled: $enabled, invalidateOn: [trigger] })
+    keepFresh(query, { triggers: [trigger] })
 
     const scope = fork({ handlers: [[query.__.executeFx, request]] })
 
@@ -49,7 +48,7 @@ describe("keepFresh", () => {
 
     const query = createQuery<unknown, Record<string, never>>({ client, document })
 
-    keepFresh(query, { enabled: $enabled, invalidateOn: [trigger] })
+    keepFresh(query, { triggers: [trigger] })
 
     const scope = fork({ handlers: [[query.__.executeFx, request]] })
 
@@ -70,7 +69,7 @@ describe("keepFresh", () => {
     const proto: TriggerProtocol = { "@@trigger": () => ({ fired, setup, teardown }) }
     const query = createQuery<unknown, Record<string, never>>({ client, document })
 
-    keepFresh(query, { enabled: $enabled, invalidateOn: [proto] })
+    keepFresh(query, { triggers: [proto] })
 
     const scope = fork({ handlers: [[query.__.executeFx, request]] })
 
@@ -88,6 +87,7 @@ describe("keepFresh", () => {
 
     const on = vi.fn()
 
+    const $enabled = createStore(true)
     const fired = createEvent<void>()
 
     const setup = createEvent<void>()
@@ -98,7 +98,7 @@ describe("keepFresh", () => {
     const proto: TriggerProtocol = { "@@trigger": () => ({ fired, setup, teardown }) }
     const query = createQuery<unknown, Record<string, never>>({ client, document })
 
-    keepFresh(query, { enabled: $enabled, invalidateOn: [proto] })
+    keepFresh(query, { enabled: $enabled, triggers: [proto] })
 
     const scope = fork({ handlers: [[query.__.executeFx, request]] })
 
@@ -114,6 +114,7 @@ describe("keepFresh", () => {
 
     const off = vi.fn()
 
+    const $enabled = createStore(true)
     const fired = createEvent<void>()
 
     const setup = createEvent<void>()
@@ -124,7 +125,7 @@ describe("keepFresh", () => {
     const proto: TriggerProtocol = { "@@trigger": () => ({ fired, setup, teardown }) }
     const query = createQuery<unknown, Record<string, never>>({ client, document })
 
-    keepFresh(query, { enabled: $enabled, invalidateOn: [proto] })
+    keepFresh(query, { enabled: $enabled, triggers: [proto] })
 
     const scope = fork({ handlers: [[query.__.executeFx, request]] })
 
@@ -132,5 +133,22 @@ describe("keepFresh", () => {
     await allSettled($enabled, { scope, params: false })
 
     expect(off).toHaveBeenCalledOnce()
+  })
+
+  it("skips refreshing when disabled", async () => {
+    expect.assertions(1)
+
+    const $enabled = createStore(false)
+    const query = createQuery<unknown, Record<string, never>>({ client, document })
+
+    keepFresh(query, { enabled: $enabled, triggers: [trigger] })
+
+    const scope = fork({ handlers: [[query.__.executeFx, request]] })
+
+    await allSettled(query.start, { scope })
+
+    await allSettled(trigger, { scope })
+
+    expect(request).toHaveBeenCalledTimes(1)
   })
 })

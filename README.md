@@ -162,6 +162,56 @@ This operator allows you to connect `Query` to cache if you expect other parts o
 - `optimistic?`: `boolean` can be set to `false` to disable reading `optimistic` cache
 - `client?`: `ApolloClient | Store<ApolloClient>` to use cache from. Will use the client from `createQuery` if not provided
 
+### `keepFresh`
+
+Enables automatic refreshes for a query, ensuring that the data stays up-to-date in response to specific events or triggers.
+
+**Options:**
+
+- `query`: `Query` you want to keep fresh
+- `triggers`: `Array<Event<void> | TriggerProtocol>` containing triggers that will invalidate the query and initiate a network request for fresh data. Trigger can be either:
+  - any `Event<void>`, or
+  - [`TriggerProtocol`](https://withease.pages.dev/protocols/trigger) from any library that implements it
+    - 💡 [`@withease/web-api`](https://withease.pages.dev/web-api) is a great package with triggers like tab visibility change or network status change
+    - [`patronum/interval`](https://patronum.effector.dev/methods/interval/) can refresh your query on a timer
+- `enabled?`: `Store<boolean>` that controls whether the automatic refresh is enabled or disabled. If ommited, defaults to _always enabled_
+
+<details>
+  <summary><b>Example usage:</b></summary>
+
+Fetch the query when network connection is restored
+
+```ts
+import { keepFresh, createQuery } from "effector-apollo"
+import { trackNetworkStatus } from "@withease/web-api"
+
+const userQuery = createQuery({ client, document: USER_QUERY })
+
+// If the connection is lost, fetch User as soon as it is restored
+keepFresh(userQuery, {
+  triggers: [trackNetworkStatus],
+})
+```
+
+---
+
+Refetch a related query when a mutation fails
+
+```ts
+import { keepFresh, createQuery, createMutation } from "effector-apollo"
+
+const userQuery = createQuery({ client, document: USER_QUERY })
+const updateCountryMutation = createMutation({ client, document: UPDATE_COUNTRY_MUTATION })
+
+// When update fails, data may become inconsistent,
+// so we refetch User, ensuring data is most up to date
+keepFresh(userQuery, {
+  triggers: [updateCountryMutation.finished.failure],
+})
+```
+
+</details>
+
 ### `optimistic`
 
 `optimistic` helps you define an optimistic response for your mutation. This will fill in data in Apollo Cache when running the mutation, so that your UI is responsive to user action. See more in Apollo Client "[Optimistic results](https://www.apollographql.com/docs/react/performance/optimistic-ui/)" documentation.
