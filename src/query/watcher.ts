@@ -10,6 +10,7 @@ import { type Query } from "./query"
 interface WatchQueryOptions {
   client?: ApolloClient<unknown> | Store<ApolloClient<unknown>>
 
+  /** Watch for optimistic updates? */
   optimistic?: boolean
 }
 

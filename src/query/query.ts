@@ -10,7 +10,7 @@ import {
   type TypedDocumentNode,
 } from "@apollo/client"
 
-import { nameOf } from "../lib/name"
+import { operationName } from "../lib/name"
 import { optional, type Optional } from "../lib/optional"
 import { storify } from "../lib/storify"
 import {
@@ -67,8 +67,11 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables,
   $error: Store<ApolloError | null>
 
   meta: {
+    /** The name of this query. */
     name: string
+    /** The client this query will use to make requests. */
     client: Store<ApolloClient<unknown>>
+    /** The document that contains your query and will be used to request data. */
     document: TypedDocumentNode<Data, Variables>
   }
 
@@ -89,7 +92,7 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
   document,
   context,
 
-  name = nameOf(document) || "unknown",
+  name = operationName(document) || "unknown",
 }: CreateQueryOptions<Data, Variables>): Query<Data, Variables> {
   const options: QueryOptions<Variables, Data> = {
     query: document,

@@ -8,7 +8,7 @@ import {
   type TypedDocumentNode,
 } from "@apollo/client"
 
-import { nameOf } from "../lib/name"
+import { operationName } from "../lib/name"
 import { optional, type Optional } from "../lib/optional"
 import { storify } from "../lib/storify"
 import {
@@ -59,7 +59,7 @@ export function createMutation<Data, Variables extends OperationVariables = Oper
   document,
   context,
 
-  name = nameOf(document) || "unknown",
+  name = operationName(document) || "unknown",
 }: CreateMutationOptions<Data, Variables>): Mutation<Data, Variables> {
   const $client = storify(client, { name: `${name}.client` })
 
