@@ -41,10 +41,19 @@ interface CreateFragmentBindingOptions<Data, Variables> {
   setup: Event<void>
 
   /**
-   * Variables that your fragment uses.
-   * Can be omitted if the fragment uses no variables
+   * A map of Variables that your fragment uses.
+   * Can be omitted if the fragment uses no variables.
    */
   variables?: Store<Variables>
+  /**
+   * Define how to identify a specific fragment.
+   *
+   * When provided with `Store<string>`, treat this as a ready-to-use
+   * canonical Cache ID.
+   *
+   * When provided with `Store<StoreObject>`, treat this as an object
+   * with all required _key fields_. It'll be passed to `cache.identify`.
+   */
   id: Store<string> | Store<StoreObject>
 
   /** Watch for optimistic updates? */

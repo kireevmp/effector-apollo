@@ -8,12 +8,25 @@ import { setupSubscription } from "../setup_subscription"
 import { type Query } from "./query"
 
 interface WatchQueryOptions {
+  /**
+   * Your Apollo Client instance that'll be used for watching the cache.
+   * By default, the same client you use to make requests will be used
+   * to watch the cache.
+   */
   client?: ApolloClient<unknown> | Store<ApolloClient<unknown>>
 
   /** Watch for optimistic updates? */
   optimistic?: boolean
 }
 
+/**
+ * Watch for Apollo Cache changes and update your `Query` to match.
+ *
+ * Subscribes your query to Apollo Cache to always keep `$data`
+ * in sync with Apollo Cache. Usually, `Query` only updates its
+ * `$data` upon request. `watchQuery` changes that so your `Query`
+ * behaves more like Apollo Client's React hooks.
+ */
 export function watchQuery<Data, Variables>(
   query: Query<Data, Variables>,
   {

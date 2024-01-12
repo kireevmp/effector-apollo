@@ -109,6 +109,32 @@ Creates a new mutation to modify data on your GraphQL server.
 - `finished.failure`: `Event<{ variables: Variables; error: ApolloError }>` is fired when your `Mutation` fails with the corresponding execution `error`
 - `finished.finally`: `Event` that's fired when your `Mutation` finishes with either `status: "done"` or `status: "fail"`, and will provide you with `data`/`error`
 
+### `createFragmentBinding`
+
+`createFragmentBinding` sets up a light, read-only binding into Apollo Cache. This can come in handy to access entities from your Apollo Cache without requiring a specific `Query` to do that.
+
+Like [`useFragment`](https://www.apollographql.com/docs/react/data/fragments/#usefragment) from Apollo Client, fragment binding **does not trigger network requests on its own**. Rather, it keeps data in sync between Apollo Cache and Effector.
+
+Unlike `useFragment`, however, `createFragmentBinding`'s primary purpose is to provide you with _singleton-like_ entities that your business logic might requre. Common examples would be: currently logged in `User` entity, a specific `Setting`, or feature flags.
+
+**Options:**
+
+- `client`: `ApolloClient | Store<ApolloClient>` that provides cached data
+- `document`: `DocumentNode` with a single `fragment` definition you want to bind
+- `id`: `Store<string> | Store<StoreObject>` to identify a specific `fragment`
+  - When provided with `Store<string>`, binding will treat this as a ready-to-use [Canonical Cache ID](https://www.apollographql.com/docs/react/caching/cache-interaction/#obtaining-an-objects-cache-id) (like `User:137`)
+  - When provided with `Store<StoreObject>`, binding treats this as an object with _key fields_ that uniquely identify your `fragment`
+    - Unless you [customize your cache ID](https://www.apollographql.com/docs/react/caching/cache-configuration/#customizing-cache-ids),
+      `id` or `_id` are your _key fields_. So, `Store<{ id: string }>` is usually the way to go!
+    - If you did customize cache ID for your fragment, provide all necessary key fields
+    - 💡 You do not need to provide `__typename` in this `Store`, as it is inferred from your `fragment`
+- `variables?`: `Store<Variables>` that your `fragment` requires to resolve
+  - You can omit this if your `fragment` does not require any variables
+  - ⚠️ If the `fragment` **does** need variables, you must provide this option with correct `Variables`, otherwise you'll never receive data
+- `setup`: `Event<void>` that the binding will initialize on (upon trigger)
+  - Usually, that would be your `appStarted` event, but you can also use any other trigger, like `Query.finished.success`
+- `optimistic?`: `boolean` can be set to `false` to disable reading `optimistic` cache
+
 ### `watchQuery`
 
 `watchQuery` allows you to subscribe a particular query to Apollo Cache. By default, `Query` only reads data through a request, and does not read cache (unlike Apollo's React hooks).
@@ -123,7 +149,7 @@ This operator allows you to connect `Query` to cache if you expect other parts o
 
 ### `optimistic`
 
-`optimistic` helps you to define an optimistic response for your mutation. This will fill in data in Apollo Cache when running the mutation, so that UI is responsive. See more in Apollo Client "[Optimistic results](https://www.apollographql.com/docs/react/performance/optimistic-ui/)" documentation.
+`optimistic` helps you define an optimistic response for your mutation. This will fill in data in Apollo Cache when running the mutation, so that your UI is responsive to user action. See more in Apollo Client "[Optimistic results](https://www.apollographql.com/docs/react/performance/optimistic-ui/)" documentation.
 
 **Options:**
 
