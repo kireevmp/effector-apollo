@@ -103,10 +103,19 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
 
   const push = createEvent<Data | null>({ name: `${name}.push` })
 
-  const $client = storify(client, { name: `${name}.client` })
+  const $client = storify(client, { sid: `apollo.${name}.$client`, name: `${name}.client` })
 
-  const $data = createStore<Data | null>(null, { name: `${name}.data`, skipVoid: false })
-  const $error = createStore<ApolloError | null>(null, { name: `${name}.error`, skipVoid: false })
+  const $data = createStore<Data | null>(null, {
+    name: `${name}.data`,
+    sid: `apollo.${name}.$data`,
+    skipVoid: false,
+  })
+
+  const $error = createStore<ApolloError | null>(null, {
+    name: `${name}.error`,
+    sid: `apollo.${name}.$error`,
+    skipVoid: false,
+  })
 
   const handler = attach({
     source: { client: $client },

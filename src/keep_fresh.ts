@@ -34,6 +34,7 @@ export function keepFresh<Data, Variables>(
 
     const $setup = createStore(false, {
       name: `${name}.setup`,
+      sid: `apollo.${name}.$setup`,
       serialize: "ignore",
       skipVoid: false,
     })

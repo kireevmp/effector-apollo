@@ -21,6 +21,7 @@ export function setupSubscription<Params>({
 }: SetupSubscriptionOptions<Params>) {
   const $subscription = createStore<Subscription | null>(null, {
     name: `${name}.subscription`,
+    sid: `apollo.${name}.$subscription`,
     serialize: "ignore",
     skipVoid: false,
   })

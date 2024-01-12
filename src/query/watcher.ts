@@ -40,12 +40,16 @@ export function watchQuery<Data, Variables>(
   const name = `${query.meta.name}.watch`
   const options: WatchOptions = { query: query.meta.document, optimistic }
 
-  const $client = storify(client, { name: `${name}.client` })
+  const $client = storify(client, { name: `${name}.client`, sid: `apollo.${name}.$client` })
 
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
   const received = sample({ clock: updated, filter: ({ complete }) => Boolean(complete) })
 
-  const $subscribed = createStore(false, { skipVoid: false, name: `${name}.subscribed` })
+  const $subscribed = createStore(false, {
+    name: `${name}.subscribed`,
+    sid: `apollo.${name}.$subscribed`,
+    skipVoid: false,
+  })
 
   const subscribeFx = attach({
     name: `${name}.subscriber`,

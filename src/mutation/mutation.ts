@@ -61,7 +61,7 @@ export function createMutation<Data, Variables extends OperationVariables = Oper
 
   name = operationName(document) || "unknown",
 }: CreateMutationOptions<Data, Variables>): Mutation<Data, Variables> {
-  const $client = storify(client, { name: `${name}.client` })
+  const $client = storify(client, { name: `${name}.client`, sid: `apollo.${name}.$client` })
 
   const handler = attach({
     source: { client: $client },

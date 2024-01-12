@@ -83,19 +83,27 @@ export function createRemoteOperation<Data, Variables, Meta>({
   const called = createEvent<Promise<Data>>({ name: `${name}.called` })
 
   // Should not be used before being populated by queryFx
-  const $variables = createStore({} as Variables, { name: `${name}.variables`, skipVoid: false })
+  const $variables = createStore({} as Variables, {
+    name: `${name}.variables`,
+    sid: `apollo.${name}.$variables`,
+    skipVoid: false,
+  })
 
   const executeFx = createEffect<ExecutionParams<Variables, Meta>, Data, ApolloError>({
     name: `${name}.executeFx`,
     handler,
   })
 
-  const $status = status(executeFx, { name: `${name}.status` }).reset(reset)
+  const $status = status(executeFx, {
+    name: `${name}.status`,
+    sid: `apollo.${name}.$status`,
+  })
 
   const success = executeFx.done.map(({ params, result: data }) => ({ ...params, data }))
   const failure = executeFx.fail.map(({ params, error }) => ({ ...params, error }))
 
   sample({ clock: execute, target: executeFx })
+  sample({ clock: reset, target: $status.reinit })
 
   patchHandler(executeFx, called)
 

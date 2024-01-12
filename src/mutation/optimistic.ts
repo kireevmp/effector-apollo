@@ -20,7 +20,7 @@ export function optimistic<Data, Variables>(
   const name = `${mutation.meta.name}.optimistic`
   const query = asQuery(mutation.meta.document)
 
-  const $client = storify(client, { name: `${name}.client` })
+  const $client = storify(client, { name: `${name}.client`, sid: `apollo.${name}.$client` })
 
   const updateFx = attach({
     source: { client: $client, variables: mutation.__.$variables },

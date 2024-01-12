@@ -132,18 +132,34 @@ export function createFragmentBinding<
   }
 
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
-  const subscribe = createEvent<void>({ name: `${name}.subscribe` })
 
-  const $active = createStore<boolean>(false, { skipVoid: false, name: `${name}.enabled` })
-  const $data = createStore<Data | null>(null, { skipVoid: false, name: `${name}.data` })
+  const $active = createStore<boolean>(false, {
+    name: `${name}.active`,
+    sid: `apollo.${name}.$active`,
+    skipVoid: false,
+  })
 
-  const $client = storify(client, { name: `${name}.client` })
+  const $data = createStore<Data | null>(null, {
+    name: `${name}.data`,
+    sid: `apollo.${name}.$data`,
+    skipVoid: false,
+  })
+
+  const $client = storify(client, { name: `${name}.client`, sid: `apollo.${name}.$client` })
+
   const $variables = is.store(variables)
     ? variables
-    : createStore({} as Variables, { name: `${name}.variables` })
+    : createStore({} as Variables, {
+        name: `${name}.variables`,
+        sid: `apollo.${name}.$variables`,
+        skipVoid: false,
+      })
 
-  const $id = combine($client, id, ({ cache }, id) =>
-    typeof id === "string" ? id : cache.identify({ __typename: typeName, ...id }),
+  const $id = combine(
+    { client: $client, id },
+    ({ client: { cache }, id }): string =>
+      typeof id === "string" ? id : cache.identify({ __typename: typeName, ...id }) ?? typeName,
+    { skipVoid: false },
   )
 
   const subscribeFx = attach({
@@ -162,10 +178,10 @@ export function createFragmentBinding<
     $data.reset(teardown)
   }
 
-  sample({
+  const connect = sample({
     clock: [$active, $client, $id, $variables],
     filter: $active,
-    target: subscribe,
+    fn: (): void => undefined,
   })
 
   sample({
@@ -174,7 +190,7 @@ export function createFragmentBinding<
     target: $data,
   })
 
-  setupSubscription({ setup: subscribe, teardown, subscribe: subscribeFx, name })
+  setupSubscription({ setup: connect, teardown, subscribe: subscribeFx, name })
 
   return {
     $data: readonly($data),

@@ -5,9 +5,9 @@ export type OperationStatus = "initial" | "pending" | "done" | "fail"
 
 export function status<Params, Done, Fail = Error>(
   effect: Effect<Params, Done, Fail>,
-  { name = "status" }: { name?: string } = {},
+  config: { name: string; sid: string },
 ): StoreWritable<OperationStatus> {
-  const $status = createStore<OperationStatus>("initial", { name })
+  const $status = createStore<OperationStatus>("initial", config)
 
   $status
     .on(effect, () => "pending")
