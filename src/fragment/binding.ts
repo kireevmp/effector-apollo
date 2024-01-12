@@ -73,7 +73,7 @@ interface CreateFragmentBindingOptions<Data, Variables> {
   name?: string
 }
 
-interface FragmentBinding<Data, Variables> {
+export interface FragmentBinding<Data, Variables> {
   /**
    * The fragment data. Will be null if entry was not found in cache, or if
    * the binding has not been set up yet.
