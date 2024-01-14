@@ -1,5 +1,11 @@
 # effector-apollo
 
+## 0.4.1
+
+### Patch Changes
+
+- 0d2fef3: Allow arbitrary payload in `setup`/`teardown` of `createFragmentBinding`
+
 ## 0.4.0
 
 This release brings a couple of new features and improvements.
