@@ -136,9 +136,9 @@ Unlike `useFragment`, however, `createFragmentBinding`'s primary purpose is to p
 - `variables?`: `Store<Variables>` that your `fragment` requires to resolve
   - You can omit this if your `fragment` does not require any variables
   - ⚠️ If the `fragment` **does** need variables, you must provide this option with correct `Variables`, otherwise you'll never receive data
-- `setup`: `Event<void>` that the binding will initialize on (upon trigger)
+- `setup`: `Event` that the binding will initialize on (upon trigger)
   - Usually, that would be your `appStarted` event, but you can also use any other trigger, like `Query.finished.success`
-- `teardown`: `Event<void>` tears down the binding, clearing `$data` and stopping listening for updates
+- `teardown`: `Event` tears down the binding, clearing `$data` and stopping listening for updates
 - `optimistic?`: `boolean` can be set to `false` to disable reading `optimistic` cache
 
 **Returns:** a new `FragmentBinding`
@@ -169,8 +169,8 @@ Enables automatic refreshes for a query, ensuring that the data stays up-to-date
 **Options:**
 
 - `query`: `Query` you want to keep fresh
-- `triggers`: `Array<Event<void> | TriggerProtocol>` containing triggers that will invalidate the query and initiate a network request for fresh data. Trigger can be either:
-  - any `Event<void>`, or
+- `triggers`: `Array<Event | TriggerProtocol>` containing triggers that will invalidate the query and initiate a network request for fresh data. Trigger can be either:
+  - any `Event`, or
   - [`TriggerProtocol`](https://withease.pages.dev/protocols/trigger) from any library that implements it
     - 💡 [`@withease/web-api`](https://withease.pages.dev/web-api) is a great package with triggers like tab visibility change or network status change
     - [`patronum/interval`](https://patronum.effector.dev/methods/interval/) can refresh your query on a timer

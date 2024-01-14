@@ -39,7 +39,7 @@ interface CreateFragmentBindingOptions<Data, Variables> {
    * When called, will start listening to the Apollo Cache. Usually,
    * this will will be your `appStarted` event.
    */
-  setup: Event<void>
+  setup: Event<unknown>
   /**
    * A trigger to teardown the binding.
    *
@@ -48,7 +48,7 @@ interface CreateFragmentBindingOptions<Data, Variables> {
    *
    * You must then call `setup` again to re-activate the binding.
    */
-  teardown?: Event<void>
+  teardown?: Event<unknown>
 
   /**
    * A map of Variables that your fragment uses.
