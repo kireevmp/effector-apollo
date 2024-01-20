@@ -1,5 +1,11 @@
 # effector-apollo
 
+## 0.4.2
+
+### Patch Changes
+
+- 60e05b5: Bump `vitest` & `vite` [CVE-2024-23331]
+
 ## 0.4.1
 
 ### Patch Changes
