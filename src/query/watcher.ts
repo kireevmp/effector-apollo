@@ -1,4 +1,4 @@
-import { Store, attach, createEvent, createStore, sample, scopeBind } from "effector"
+import { Store, attach, createEvent, sample, scopeBind } from "effector"
 
 import { type ApolloClient, type Cache } from "@apollo/client"
 
@@ -45,12 +45,6 @@ export function watchQuery<Data, Variables>(
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
   const received = sample({ clock: updated, filter: ({ complete }) => Boolean(complete) })
 
-  const $subscribed = createStore(false, {
-    name: `${name}.subscribed`,
-    sid: `apollo.${name}.$subscribed`,
-    skipVoid: false,
-  })
-
   const subscribeFx = attach({
     name: `${name}.subscriber`,
     source: { variables: query.__.$variables, client: $client },
@@ -60,11 +54,8 @@ export function watchQuery<Data, Variables>(
     },
   })
 
-  $subscribed.on(query.__.execute, () => true)
-
   const connect = sample({
     clock: [query.__.execute, query.__.$variables],
-    filter: $subscribed,
     fn: (): void => undefined,
   })
 
