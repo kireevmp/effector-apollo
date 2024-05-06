@@ -23,7 +23,7 @@ import {
 import { createQueryController, type QueryMeta } from "./controller"
 
 interface CreateQueryOptions<Data, Variables> {
-  /** Your Apollo Client instance that'll be used for making the query. */
+  /** Your {@link ApolloClient} instance that'll be used for making the query. */
   client: ApolloClient<unknown> | Store<ApolloClient<unknown>>
   /**
    * A GraphQL Document with a single `query` for your operation.
@@ -59,7 +59,7 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables,
    */
   $data: Store<Data | null>
   /**
-   * Latest `Query` error.
+   * Latest {@link Query} error.
    *
    * If the data has been successfully fetched, or if there was no request yet,
    * the store will be `null`.

@@ -15,7 +15,7 @@ describe("createRemoteOperation", () => {
     handler.mockReset()
   })
 
-  describe("queryFx", () => {
+  describe("executeFx", () => {
     const watcher = vi.fn()
     let unsub: () => void
 

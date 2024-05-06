@@ -1,7 +1,7 @@
 import { attach, createEvent, sample, type EventCallable, type Store } from "effector"
 
 import {
-  DefaultContext,
+  type DefaultContext,
   type ApolloClient,
   type DocumentNode,
   type OperationVariables,

@@ -82,7 +82,7 @@ export function createRemoteOperation<Data, Variables, Meta>({
   const execute = createEvent<ExecutionParams<Variables, Meta>>({ name: `${name}.execute` })
   const called = createEvent<Promise<Data>>({ name: `${name}.called` })
 
-  // Should not be used before being populated by queryFx
+  // Should not be used before being populated by executeFx
   const $variables = createStore({} as Variables, {
     name: `${name}.variables`,
     sid: `apollo.${name}.$variables`,

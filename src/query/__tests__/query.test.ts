@@ -34,7 +34,7 @@ describe("createQuery", () => {
     it("populates on success", async () => {
       expect.assertions(1)
 
-      request.mockResolvedValue("test")
+      request.mockResolvedValue({ value: "test" })
 
       const scope = fork({
         handlers: [[query.__.executeFx, request]],
@@ -43,20 +43,20 @@ describe("createQuery", () => {
       await allSettled(query.start, { scope })
 
       const data = scope.getState(query.$data)
-      expect(data).toBe("test")
+      expect(data).toStrictEqual({ value: "test" })
     })
 
     it("resets on failure", async () => {
       expect.assertions(1)
 
-      request.mockRejectedValue(new ApolloError({}))
+      request.mockResolvedValueOnce({ value: "test" }).mockRejectedValue(new ApolloError({}))
 
       const scope = fork({
-        values: [[query.$data, "initial"]],
         handlers: [[query.__.executeFx, request]],
       })
 
-      await allSettled(query.start, { scope })
+      await allSettled(query.start, { scope }) // Success
+      await allSettled(query.start, { scope }) // Failure
 
       expect(scope.getState(query.$data)).toBeNull()
     })
@@ -66,14 +66,14 @@ describe("createQuery", () => {
     it("resets on success", async () => {
       expect.assertions(1)
 
-      request.mockResolvedValue({ data: "test" })
+      request.mockRejectedValueOnce(new ApolloError({})).mockResolvedValueOnce({ value: "test" })
 
       const scope = fork({
-        values: [[query.$error, new ApolloError({})]],
         handlers: [[query.__.executeFx, request]],
       })
 
-      await allSettled(query.start, { scope })
+      await allSettled(query.start, { scope }) // Failure
+      await allSettled(query.start, { scope }) // Success
 
       expect(scope.getState(query.$error)).toBeNull()
     })
@@ -95,11 +95,11 @@ describe("createQuery", () => {
   })
 
   describe("start", () => {
-    it("executes queryFx", async () => {
+    it("executes executeFx", async () => {
       expect.assertions(1)
 
       const query = createQuery<unknown, { key: "value" }>({ client, document })
-      request.mockResolvedValue({ data: "test" })
+      request.mockResolvedValue({ value: "test" })
 
       const scope = fork({
         handlers: [[query.__.executeFx, request]],
@@ -114,7 +114,7 @@ describe("createQuery", () => {
       expect.assertions(1)
 
       client.setLink(new MockLink([{ request: { query: document }, result: request }]))
-      request.mockReturnValue({ data: { value: "value" } })
+      request.mockReturnValue({ value: "value" })
 
       const query = createQuery<unknown, Record<string, never>>({ client, document })
 

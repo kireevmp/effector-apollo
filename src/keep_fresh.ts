@@ -1,8 +1,7 @@
 import { createStore, is, sample, type Event, type EventCallable, type Store } from "effector"
 
-import { not } from "patronum/not"
-
 import { divide } from "./lib/divide"
+import { not } from "./lib/not"
 import { storify } from "./lib/storify"
 import { type Query } from "./query/query"
 
