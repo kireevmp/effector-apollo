@@ -1,5 +1,17 @@
 # effector-apollo
 
+## 0.5.0
+
+### Minor Changes
+
+- f7b2102: Add `paginate` operator for `Query`
+- a2a2024: Limit package contents to `dist`
+
+### Patch Changes
+
+- df81bf6: Fix `watchQuery` to allow resubscribing on variable changes
+- 93fcb18: Update internal dependencies
+
 ## 0.4.2
 
 ### Patch Changes
