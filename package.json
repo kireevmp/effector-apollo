@@ -28,6 +28,9 @@
     }
   },
   "types": "./dist/index.d.mts",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
     "build": "rollup --config",
     "prepack": "pnpm build",
