@@ -1,5 +1,6 @@
 export { createQuery, type Query } from "./query/query"
 export { watchQuery } from "./query/watcher"
+export { paginate } from "./query/paginate"
 
 export { createMutation, type Mutation } from "./mutation/mutation"
 export { optimistic } from "./mutation/optimistic"

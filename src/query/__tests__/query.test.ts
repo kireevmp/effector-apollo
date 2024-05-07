@@ -114,7 +114,7 @@ describe("createQuery", () => {
       expect.assertions(1)
 
       client.setLink(new MockLink([{ request: { query: document }, result: request }]))
-      request.mockReturnValue({ value: "value" })
+      request.mockReturnValue({ data: { value: "value" } })
 
       const query = createQuery<unknown, Record<string, never>>({ client, document })
 

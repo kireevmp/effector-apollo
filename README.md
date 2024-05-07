@@ -212,6 +212,71 @@ keepFresh(userQuery, {
 
 </details>
 
+### `paginate`
+
+`paginate` creates a `fetchMore`-like function for your query, allowing for easy pagination powered by Apollo Cache.
+
+Note that this operator requires two things from you to work properly:
+
+1. You must define a proper Field Policy on a paginated field using a [`merge` function](https://www.apollographql.com/docs/react/caching/cache-field-behavior/#the-merge-function) of `InMemoryCache`. This allows to store paginated results in the cache
+2. The `Query` must not be "idle" when you use pagination. Fetch the Query using `.refresh` or `.start` before paginating.
+
+Triggering the event returned by `paginate(query)` will
+
+- shallowly merge last used `query` variables and new variables provided to `paginate`
+- execute the `query` to fetch the next page based on updated variables
+- merge pages using your policy (as defined in `InMemoryCache`)
+- store results in `query.$data`
+
+Read more about [Pagination API](https://www.apollographql.com/docs/react/pagination/core-api) in Apollo.
+
+**Options:**
+
+- `query`: `Query` that will be paginated
+
+**Returns:** `EventCallable<Partial<Variables>>` which you can call to fetch the next page
+
+<details>
+  <summary><b>Example usage:</b></summary>
+
+Paginate a query using a cursor in a Relay-style pagination.
+
+```ts
+import { createQuery, paginate } from "effector-apollo"
+import { gql } from "@apollo/client"
+
+const document = gql`
+  query list($cursor: String) {
+    items(cursor: $cursor) {
+      nodes {
+        id
+      }
+
+      pageInfo {
+        endCursor
+      }
+    }
+  }
+`
+
+const listQuery = createQuery({ client, document })
+
+const nextPageRequested = createEvent<void>()
+
+sample({
+  // when the next page is requested
+  clock: nextPageRequested,
+  // take the end cursor of the list
+  source: listQuery.$data.map(({ items }) => items.pageInfo.endCursor),
+  // construct an update to query variables
+  fn: (cursor) => ({ cursor }),
+  // launch pagination
+  target: paginate(listQuery),
+})
+```
+
+</details>
+
 ### `optimistic`
 
 `optimistic` helps you define an optimistic response for your mutation. This will fill in data in Apollo Cache when running the mutation, so that your UI is responsive to user action. See more in Apollo Client "[Optimistic results](https://www.apollographql.com/docs/react/performance/optimistic-ui/)" documentation.
