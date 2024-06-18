@@ -1,4 +1,4 @@
-import { Store, attach, createEvent, sample, scopeBind } from "effector"
+import { type Store, attach, createEvent, sample, scopeBind } from "effector"
 
 import { type ApolloClient, type Cache } from "@apollo/client"
 
@@ -14,6 +14,19 @@ interface WatchQueryOptions {
    * to watch the cache.
    */
   client?: ApolloClient<unknown> | Store<ApolloClient<unknown>>
+
+  /**
+   * Controls when `watchQuery` will listen to updates in cache.
+   *
+   * By default, this is when the {@link Query} has succeeded.
+   * (i.e. run successfully at least once and not reset).
+   *
+   * ---
+   *
+   * Note: `enabled` being `true` is required but not sufficient for `Query`
+   * to subscribe to cache. The query needs to aquire variables
+   */
+  enabled?: Store<boolean>
 
   /** Watch for optimistic updates? */
   optimistic?: boolean
@@ -31,6 +44,8 @@ export function watchQuery<Data, Variables>(
   query: Query<Data, Variables>,
   {
     client = query.meta.client,
+
+    enabled: $enabled = query.$succeeded,
 
     optimistic = true,
   }: WatchQueryOptions = {},
@@ -54,8 +69,13 @@ export function watchQuery<Data, Variables>(
     },
   })
 
-  const connect = sample({
-    clock: [query.__.execute, query.__.$variables],
+  /** Fires when we _can_ connect */
+  const ready = sample({ clock: $enabled, filter: (enabled) => enabled })
+  const teardown = sample({ clock: $enabled, filter: (enabled) => !enabled })
+
+  const setup = sample({
+    clock: [ready, query.finished.finally, query.__.$variables],
+    filter: $enabled,
     fn: (): void => undefined,
   })
 
@@ -69,5 +89,5 @@ export function watchQuery<Data, Variables>(
     target: query.__.push,
   })
 
-  setupSubscription({ subscribe: subscribeFx, setup: connect, name })
+  setupSubscription({ subscribe: subscribeFx, setup, teardown, name })
 }

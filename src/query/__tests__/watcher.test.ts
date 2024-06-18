@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { allSettled, fork } from "effector"
+import { allSettled, createStore, fork } from "effector"
 
 import { ApolloClient, InMemoryCache, gql } from "@apollo/client"
 import { MockLink, MockedResponse } from "@apollo/client/testing"
@@ -15,7 +15,7 @@ describe("watchQuery", () => {
     }
   `
 
-  const mock = { request: { query: document }, result: { data: { value: "value" } } }
+  const mock = { request: { query: document }, result: { data: { value: "old" } } }
   const link = new MockLink([mock])
 
   const cache = new InMemoryCache()
@@ -81,7 +81,7 @@ describe("watchQuery", () => {
       )
 
       const data = scope.getState(query.$data)
-      expect(data).toStrictEqual({ value: "value" })
+      expect(data).toStrictEqual({ value: "old" })
     })
   })
 
@@ -124,6 +124,24 @@ describe("watchQuery", () => {
     expect(data).toStrictEqual({ value: "new" })
   })
 
+  it("stops watching for cache when query is reset", async () => {
+    expect.assertions(1)
+
+    const query = createQuery<unknown, Record<string, never>>({ client, document })
+
+    watchQuery(query)
+
+    const scope = fork()
+
+    await allSettled(query.start, { scope })
+    await allSettled(query.reset, { scope })
+
+    cache.writeQuery({ query: document, data: { value: "new" }, broadcast: true })
+
+    const data = scope.getState(query.$data)
+    expect(data).toStrictEqual(null)
+  })
+
   describe("when changing variables", () => {
     const document = gql`
       query test($id: String) {
@@ -162,6 +180,85 @@ describe("watchQuery", () => {
 
       const data = scope.getState(query.$data)
       expect(data).toStrictEqual({ value: "new" })
+    })
+
+    it("keeps data empty when enabling watch & missing variables", async () => {
+      expect.assertions(1)
+
+      client.setLink(new MockLink([initial]))
+
+      const $enabled = createStore<boolean>(false)
+      const query = createQuery<unknown, { id: string }>({ client, document })
+
+      watchQuery(query)
+
+      const scope = fork()
+
+      await allSettled($enabled, { scope, params: true })
+
+      cache.writeQuery({ query: document, variables: { id: "initial" }, data: { value: "new" } })
+
+      const data = scope.getState(query.$data)
+      expect(data).toStrictEqual(null)
+    })
+  })
+
+  describe("with explicit subscription control", () => {
+    const $enabled = createStore<boolean>(false)
+
+    it("does not start watching when disabled", async () => {
+      expect.assertions(1)
+
+      const query = createQuery<unknown, Record<string, never>>({ client, document })
+
+      watchQuery(query, { enabled: $enabled })
+
+      const scope = fork()
+
+      await allSettled(query.start, { scope })
+
+      cache.writeQuery({ query: document, data: { value: "new" } })
+
+      const data = scope.getState(query.$data)
+      expect(data).toStrictEqual({ value: "old" })
+    })
+
+    it("can start watching without start", async () => {
+      expect.assertions(1)
+
+      const query = createQuery<unknown, Record<string, never>>({ client, document })
+
+      watchQuery(query, { enabled: $enabled })
+
+      const scope = fork()
+
+      await allSettled($enabled, { scope, params: true })
+
+      cache.writeQuery({ query: document, data: { value: "new" } })
+
+      const data = scope.getState(query.$data)
+      expect(data).toStrictEqual({ value: "new" })
+    })
+
+    it("stops watching when disabled", async () => {
+      expect.assertions(1)
+
+      const query = createQuery<unknown, Record<string, never>>({ client, document })
+
+      watchQuery(query, { enabled: $enabled })
+
+      const scope = fork({
+        values: [[$enabled, true]],
+      })
+
+      await allSettled(query.start, { scope })
+
+      await allSettled($enabled, { scope, params: false })
+
+      cache.writeQuery({ query: document, data: { value: "new" } })
+
+      const data = scope.getState(query.$data)
+      expect(data).toStrictEqual({ value: "old" })
     })
   })
 })
