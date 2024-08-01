@@ -158,7 +158,7 @@ export function createFragmentBinding<
   const $id = combine(
     { client: $client, id },
     ({ client: { cache }, id }): string =>
-      typeof id === "string" ? id : cache.identify({ __typename: typeName, ...id }) ?? typeName,
+      typeof id === "string" ? id : (cache.identify({ __typename: typeName, ...id }) ?? typeName),
     { skipVoid: false },
   )
 

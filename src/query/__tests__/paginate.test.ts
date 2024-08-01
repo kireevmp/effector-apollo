@@ -46,7 +46,7 @@ describe("paginate", () => {
   it("fires a network-only request on pagination", async () => {
     expect.assertions(1)
 
-    const request = vi.fn<[], Data>().mockResolvedValue({ value: ["first"] })
+    const request = vi.fn<() => Data>().mockResolvedValue({ value: ["first"] })
 
     const scope = fork({
       handlers: [[query.__.executeFx, request]],
@@ -61,7 +61,7 @@ describe("paginate", () => {
   it("merges variables for pagination", async () => {
     expect.assertions(1)
 
-    const request = vi.fn<[], Data>().mockResolvedValue({ value: ["first"] })
+    const request = vi.fn<() => Data>().mockResolvedValue({ value: ["first"] })
 
     const scope = fork({
       handlers: [[query.__.executeFx, request]],

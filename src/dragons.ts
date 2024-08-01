@@ -17,7 +17,7 @@ export function patchHandler(fx: Effect<any, any, any>, called: EventCallable<Pr
    * {@see https://github.com/effector/effector/blob/a0f997b3d355c5a9b682e3747f00a1ffe7de8646/src/effector/__tests__/effect/index.test.ts#L432}
    */
   const patchHandler = step.compute({
-    // eslint-disable-next-line @typescript-eslint/ban-types
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     fn(run: { handler: Function }) {
       const original = run.handler
 

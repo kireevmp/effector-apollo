@@ -35,8 +35,7 @@ interface CreateMutationOptions<Data, Variables> {
 
 export type MutationMeta = void
 
-interface MutationInternals<Data, Variables>
-  extends RemoteOperationInternals<Data, Variables, MutationMeta> {}
+type MutationInternals<Data, Variables> = RemoteOperationInternals<Data, Variables, MutationMeta>
 
 export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variables, MutationMeta> {
   /** Run this Mutation against the GraphQL server. */

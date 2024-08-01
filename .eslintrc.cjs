@@ -37,6 +37,7 @@ module.exports = {
   ],
   rules: {
     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/prefer-promise-reject-errors": "off",
 
     "sort-imports": ["warn", { allowSeparatedGroups: true, ignoreDeclarationSort: true }],
 
