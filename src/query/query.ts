@@ -1,26 +1,26 @@
-import { attach, createEvent, createStore, sample, type EventCallable, type Store } from "effector"
+import { type EventCallable, type Store, attach, createEvent, createStore, sample } from "effector"
 
-import {
-  type ApolloClient,
-  type ApolloError,
-  type DefaultContext,
-  type DocumentNode,
-  type OperationVariables,
-  type QueryOptions,
-  type TypedDocumentNode,
+import type {
+  ApolloClient,
+  ApolloError,
+  DefaultContext,
+  DocumentNode,
+  OperationVariables,
+  QueryOptions,
+  TypedDocumentNode,
 } from "@apollo/client"
 
 import { operationName } from "../lib/name"
-import { optional, type Optional } from "../lib/optional"
+import { type Optional, optional } from "../lib/optional"
 import { storify } from "../lib/storify"
 import {
-  createRemoteOperation,
   type ExecutionParams,
   type RemoteOperation,
   type RemoteOperationInternals,
+  createRemoteOperation,
 } from "../remote_operation"
 
-import { createQueryController, type QueryMeta } from "./controller"
+import { type QueryMeta, createQueryController } from "./controller"
 
 interface CreateQueryOptions<Data, Variables> {
   /** Your {@link ApolloClient} instance that'll be used for making the query. */

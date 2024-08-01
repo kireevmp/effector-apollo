@@ -1,6 +1,6 @@
-import { type EventCallable } from "effector"
+import type { EventCallable } from "effector"
 
-import { type OperationVariables } from "@apollo/client"
+import type { OperationVariables } from "@apollo/client"
 
 type EmptyVariables = Record<PropertyKey, never>
 export type Optional<Payload> = Payload extends EmptyVariables ? void : Payload

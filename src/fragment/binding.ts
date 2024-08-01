@@ -1,4 +1,6 @@
 import {
+  type Event,
+  type Store,
   attach,
   combine,
   createEvent,
@@ -6,19 +8,17 @@ import {
   is,
   sample,
   scopeBind,
-  type Event,
-  type Store,
 } from "effector"
 
-import {
-  type ApolloClient,
-  type Cache,
-  type DocumentNode,
-  type OperationVariables,
-  type StoreObject,
-  type TypedDocumentNode,
+import type {
+  ApolloClient,
+  Cache,
+  DocumentNode,
+  OperationVariables,
+  StoreObject,
+  TypedDocumentNode,
 } from "@apollo/client"
-import { Kind, OperationTypeNode, type FragmentDefinitionNode } from "graphql"
+import { type FragmentDefinitionNode, Kind, OperationTypeNode } from "graphql"
 
 import { fragmentName } from "../lib/name"
 import { readonly } from "../lib/readonly"

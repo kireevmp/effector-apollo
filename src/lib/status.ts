@@ -1,5 +1,5 @@
 /** Adapted from {@link https://github.com/effector/patronum/blob/main/src/status/index.ts} */
-import { createStore, type Effect, type Store, type StoreWritable } from "effector"
+import { type Effect, type Store, type StoreWritable, createStore } from "effector"
 
 export type OperationStatus = "initial" | "pending" | "done" | "fail"
 

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { createEvent } from "effector"
 
-import { OperationVariables } from "@apollo/client"
+import type { OperationVariables } from "@apollo/client"
 
 import { optional } from "../optional"
 

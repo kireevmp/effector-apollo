@@ -1,8 +1,8 @@
 import { describe, expectTypeOf, it } from "vitest"
 
-import { Event, EventCallable, Store } from "effector"
+import type { Event, EventCallable, Store } from "effector"
 
-import { ApolloClient, InMemoryCache, TypedDocumentNode, gql } from "@apollo/client"
+import { ApolloClient, InMemoryCache, type TypedDocumentNode, gql } from "@apollo/client"
 
 import { createQuery } from "../query"
 

@@ -1,8 +1,8 @@
-import { EventCallable, EventCallableAsReturnType, createEvent, sample } from "effector"
+import { type EventCallable, type EventCallableAsReturnType, createEvent, sample } from "effector"
 
 import { not } from "../lib/not"
 
-import { Query } from "./query"
+import type { Query } from "./query"
 
 /**
  * A pagination helper for a {@link Query}.

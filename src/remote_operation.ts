@@ -1,22 +1,22 @@
 import {
-  createEffect,
-  createEvent,
-  createStore,
-  merge,
-  sample,
   type Effect,
   type EffectParams,
   type EffectResult,
   type Event,
   type EventCallable,
   type Store,
+  createEffect,
+  createEvent,
+  createStore,
+  merge,
+  sample,
 } from "effector"
 
-import { type ApolloError } from "@apollo/client"
+import type { ApolloError } from "@apollo/client"
 
 import { patchHandler } from "./dragons"
 import { readonly } from "./lib/readonly"
-import { status, viewStatus, type OperationStatus, type ViewStatus } from "./lib/status"
+import { type OperationStatus, type ViewStatus, status, viewStatus } from "./lib/status"
 
 export interface ExecutionParams<Variables, Meta> {
   variables: Variables

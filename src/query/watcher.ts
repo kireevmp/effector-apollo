@@ -1,11 +1,11 @@
 import { type Store, attach, createEvent, sample, scopeBind } from "effector"
 
-import { type ApolloClient, type Cache } from "@apollo/client"
+import type { ApolloClient, Cache } from "@apollo/client"
 
 import { storify } from "../lib/storify"
 import { setupSubscription } from "../setup_subscription"
 
-import { type Query } from "./query"
+import type { Query } from "./query"
 
 interface WatchQueryOptions {
   /**

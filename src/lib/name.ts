@@ -1,4 +1,4 @@
-import { Kind, type DocumentNode, type OperationDefinitionNode } from "graphql"
+import { type DocumentNode, Kind, type OperationDefinitionNode } from "graphql"
 
 export function operationName(document: DocumentNode): string | null {
   return (

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { allSettled, createStore, fork } from "effector"
 
-import { ApolloClient, InMemoryCache, TypedDocumentNode, gql } from "@apollo/client"
+import { ApolloClient, InMemoryCache, type TypedDocumentNode, gql } from "@apollo/client"
 import { MockLink } from "@apollo/client/testing"
 
 import { createMutation } from "../mutation"

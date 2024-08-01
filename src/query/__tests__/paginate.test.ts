@@ -2,8 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { allSettled, fork } from "effector"
 
-import { gql, ApolloClient, InMemoryCache, TypePolicies, TypedDocumentNode } from "@apollo/client"
-import { MockLink, MockedResponse } from "@apollo/client/testing"
+import {
+  ApolloClient,
+  InMemoryCache,
+  type TypePolicies,
+  type TypedDocumentNode,
+  gql,
+} from "@apollo/client"
+import { MockLink, type MockedResponse } from "@apollo/client/testing"
 import { concatPagination } from "@apollo/client/utilities"
 
 import { paginate } from "../paginate"

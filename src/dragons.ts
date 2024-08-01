@@ -1,4 +1,4 @@
-import { step, type Effect, type EventCallable, type Node } from "effector"
+import { type Effect, type EventCallable, type Node, step } from "effector"
 
 export function patchHandler(fx: Effect<any, any, any>, called: EventCallable<Promise<any>>) {
   /**

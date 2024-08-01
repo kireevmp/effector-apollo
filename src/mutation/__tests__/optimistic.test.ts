@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 
 import { allSettled, fork } from "effector"
 
-import { gql, InMemoryCache, ApolloClient } from "@apollo/client"
+import { ApolloClient, InMemoryCache, gql } from "@apollo/client"
 import { MockLink } from "@apollo/client/testing"
 
 import { createMutation } from "../mutation"

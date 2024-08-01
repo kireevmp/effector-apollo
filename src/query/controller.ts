@@ -1,6 +1,6 @@
-import { createEvent, sample, type EventCallable } from "effector"
+import { type EventCallable, createEvent, sample } from "effector"
 
-import { RemoteOperation } from "../remote_operation"
+import type { RemoteOperation } from "../remote_operation"
 
 export interface QueryMeta {
   force: boolean

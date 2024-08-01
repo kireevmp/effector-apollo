@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { allSettled, createStore, fork } from "effector"
 
 import { ApolloClient, InMemoryCache, gql } from "@apollo/client"
-import { MockLink, MockedResponse } from "@apollo/client/testing"
+import { MockLink, type MockedResponse } from "@apollo/client/testing"
 
 import { createQuery } from "../query"
 import { watchQuery } from "../watcher"

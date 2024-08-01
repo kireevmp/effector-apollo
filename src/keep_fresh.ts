@@ -1,9 +1,9 @@
-import { createStore, is, sample, type Event, type EventCallable, type Store } from "effector"
+import { type Event, type EventCallable, type Store, createStore, is, sample } from "effector"
 
 import { divide } from "./lib/divide"
 import { not } from "./lib/not"
 import { storify } from "./lib/storify"
-import { type Query } from "./query/query"
+import type { Query } from "./query/query"
 
 export interface TriggerProtocol {
   "@@trigger": () => {

@@ -2,9 +2,9 @@ import { describe, expectTypeOf, it } from "vitest"
 
 import { createEvent, createStore } from "effector"
 
-import { ApolloClient, InMemoryCache, TypedDocumentNode, gql } from "@apollo/client"
+import { ApolloClient, InMemoryCache, type TypedDocumentNode, gql } from "@apollo/client"
 
-import { FragmentBinding, createFragmentBinding } from "../binding"
+import { type FragmentBinding, createFragmentBinding } from "../binding"
 
 describe("createFragmentBinding", () => {
   const client = new ApolloClient({ cache: new InMemoryCache() })

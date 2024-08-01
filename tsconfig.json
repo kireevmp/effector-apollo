@@ -5,6 +5,7 @@
     "declaration": true,
     "target": "ES2018",
     "moduleResolution": "Node",
+    "verbatimModuleSyntax": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "skipLibCheck": true,

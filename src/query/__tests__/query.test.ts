@@ -2,7 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { allSettled, createStore, fork } from "effector"
 
-import { ApolloClient, ApolloError, InMemoryCache, TypedDocumentNode, gql } from "@apollo/client"
+import {
+  ApolloClient,
+  ApolloError,
+  InMemoryCache,
+  type TypedDocumentNode,
+  gql,
+} from "@apollo/client"
 import { MockLink } from "@apollo/client/testing"
 
 import { createQuery } from "../query"

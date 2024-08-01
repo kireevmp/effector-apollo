@@ -1,4 +1,4 @@
-import { createStore, createEffect, sample, type Event, type Effect } from "effector"
+import { type Effect, type Event, createEffect, createStore, sample } from "effector"
 
 type Subscription = () => void
 

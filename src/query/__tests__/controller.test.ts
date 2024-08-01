@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { allSettled, fork } from "effector"
 
 import { createRemoteOperation } from "../../remote_operation"
-import { QueryMeta, createQueryController } from "../controller"
+import { type QueryMeta, createQueryController } from "../controller"
 
 describe("createQueryController", () => {
   const handler = vi.fn().mockResolvedValue({ data: "result" })

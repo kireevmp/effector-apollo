@@ -37,9 +37,13 @@ module.exports = {
   ],
   rules: {
     "@typescript-eslint/no-explicit-any": "off",
+
+    "sort-imports": ["warn", { allowSeparatedGroups: true, ignoreDeclarationSort: true }],
+
     "import/no-default-export": "error",
-    "import/consistent-type-specifier-style": ["error", "prefer-inline"],
+    "import/no-duplicates": ["error", { "prefer-inline": true }],
     "import/newline-after-import": "error",
+
     "import/order": [
       "error",
       {

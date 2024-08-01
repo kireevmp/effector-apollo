@@ -1,11 +1,11 @@
-import { Store, attach, sample } from "effector"
+import { type Store, attach, sample } from "effector"
 
-import { type ApolloClient, type DocumentNode } from "@apollo/client"
+import type { ApolloClient, DocumentNode } from "@apollo/client"
 import { Kind, OperationTypeNode } from "graphql"
 
 import { storify } from "../lib/storify"
 
-import { type Mutation } from "./mutation"
+import type { Mutation } from "./mutation"
 
 interface OptimisticOptions<Data, Variables> {
   client?: ApolloClient<unknown> | Store<ApolloClient<unknown>>
