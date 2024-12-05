@@ -1,5 +1,18 @@
 # effector-apollo
 
+## 0.6.0
+
+### Minor Changes
+
+- f1c669d: Migrate to [`smartbundle`](https://github.com/XaveScor/smartbundle) – huge thanks to [@XaveScor](https://github.com/XaveScor/)
+- c1bd746: Allow explicit control over subscription in `watchQuery`
+- 1336eac: Enable `verbatimModuleSyntax`
+- a75ee13 & eee5e89: Update dependencies & tooling
+
+### Patch Changes
+
+- 10854d9: Migrate to eslint@9
+
 ## 0.5.0
 
 ### Minor Changes
