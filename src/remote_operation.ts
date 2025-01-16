@@ -94,10 +94,7 @@ export function createRemoteOperation<Data, Variables, Meta>({
     handler,
   })
 
-  const $status = status(executeFx, {
-    name: `${name}.status`,
-    sid: `apollo.${name}.$status`,
-  })
+  const $status = status(executeFx, { name: `${name}.status`, sid: `apollo.${name}.$status` })
 
   const success = executeFx.done.map(({ params, result: data }) => ({ ...params, data }))
   const failure = executeFx.fail.map(({ params, error }) => ({ ...params, error }))

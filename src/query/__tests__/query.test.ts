@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { allSettled, createStore, fork } from "effector"
+import { allSettled, createStore, createWatch, fork } from "effector"
 
 import {
   ApolloClient,
@@ -148,6 +148,40 @@ describe("createQuery", () => {
     })
   })
 
+  describe("reset", () => {
+    it("resets $data after success", async () => {
+      expect.assertions(1)
+
+      request.mockResolvedValue({ value: "test" })
+
+      const scope = fork({
+        handlers: [[query.__.executeFx, request]],
+      })
+
+      await allSettled(query.start, { scope })
+      await allSettled(query.reset, { scope })
+
+      const data = scope.getState(query.$data)
+      expect(data).toBeNull()
+    })
+
+    it("resets $error after failure", async () => {
+      expect.assertions(1)
+
+      request.mockRejectedValue(new ApolloError({}))
+
+      const scope = fork({
+        handlers: [[query.__.executeFx, request]],
+      })
+
+      await allSettled(query.start, { scope })
+      await allSettled(query.reset, { scope })
+
+      const error = scope.getState(query.$error)
+      expect(error).toBeNull()
+    })
+  })
+
   describe("context", () => {
     const mock: MockedResponse = {
       request: { query: document },
@@ -190,31 +224,23 @@ describe("createQuery", () => {
   })
 
   describe("when running query", () => {
-    const watcher = vi.fn()
-    let unsub: () => void
-
-    beforeEach(() => {
-      unsub = query.finished.finally.watch(watcher)
-    })
-
-    afterEach(() => {
-      watcher.mockClear()
-      unsub()
-    })
-
     describe("on success", () => {
       it("fires finished:done", async () => {
         expect.assertions(1)
 
         request.mockResolvedValue("test")
 
+        const fn = vi.fn()
+
         const scope = fork({
           handlers: [[query.__.executeFx, request]],
         })
 
+        createWatch({ unit: query.finished.finally, fn, scope })
+
         await allSettled(query.start, { scope })
 
-        expect(watcher).toHaveBeenCalledWith({
+        expect(fn).toHaveBeenCalledWith({
           status: "done",
           meta: { force: true },
           data: "test",
@@ -230,13 +256,17 @@ describe("createQuery", () => {
         const error = new ApolloError({})
         request.mockRejectedValue(error)
 
+        const fn = vi.fn()
+
         const scope = fork({
           handlers: [[query.__.executeFx, request]],
         })
 
+        createWatch({ unit: query.finished.finally, fn, scope })
+
         await allSettled(query.start, { scope })
 
-        expect(watcher).toHaveBeenCalledWith({
+        expect(fn).toHaveBeenCalledWith({
           status: "fail",
           meta: { force: true },
           variables: {},
