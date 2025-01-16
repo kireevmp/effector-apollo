@@ -28,7 +28,7 @@ interface CreateMutationOptions<Data, Variables> {
   document: DocumentNode | TypedDocumentNode<Data, Variables>
 
   /** Context passed to your Apollo Link. */
-  context?: DefaultContext
+  context?: DefaultContext | Store<DefaultContext>
 
   name?: string
 }
@@ -62,9 +62,11 @@ export function createMutation<Data, Variables extends OperationVariables = Oper
 }: CreateMutationOptions<Data, Variables>): Mutation<Data, Variables> {
   const $client = storify(client, { name: `${name}.client`, sid: `apollo.${name}.$client` })
 
+  const $context = storify(context, { name: `${name}.context`, sid: `apollo.${name}.$context` })
+
   const handler = attach({
-    source: { client: $client },
-    effect: ({ client }, { variables }: ExecutionParams<Variables, MutationMeta>) =>
+    source: { client: $client, context: $context },
+    effect: ({ client, context }, { variables }: ExecutionParams<Variables, MutationMeta>) =>
       client
         .mutate({ mutation: document, context, variables, fetchPolicy: "network-only" })
         .then(({ data }) => data!),

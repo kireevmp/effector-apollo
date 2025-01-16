@@ -9,7 +9,7 @@ import {
   type TypedDocumentNode,
   gql,
 } from "@apollo/client"
-import { MockLink } from "@apollo/client/testing"
+import { MockLink, type MockedResponse } from "@apollo/client/testing"
 
 import { createQuery } from "../query"
 
@@ -148,6 +148,47 @@ describe("createQuery", () => {
     })
   })
 
+  describe("context", () => {
+    const mock: MockedResponse = {
+      request: { query: document },
+      result: { data: { value: "test" } },
+      maxUsageCount: Infinity,
+    }
+
+    const link = new MockLink([mock])
+
+    beforeEach(() => {
+      client.setLink(link)
+    })
+
+    it("passes static context", async () => {
+      expect.assertions(1)
+
+      const query = createQuery({ client, document, context: { key: "value" } })
+
+      const scope = fork()
+
+      await allSettled(query.start, { scope })
+
+      const context = link.operation.getContext()
+      expect(context).toStrictEqual(expect.objectContaining({ key: "value" }))
+    })
+
+    it("passes dynamic context", async () => {
+      expect.assertions(1)
+
+      const $context = createStore({ key: "dynamic" })
+      const query = createQuery({ client, document, context: $context })
+
+      const scope = fork()
+
+      await allSettled(query.start, { scope })
+
+      const context = link.operation.getContext()
+      expect(context).toStrictEqual(expect.objectContaining({ key: "dynamic" }))
+    })
+  })
+
   describe("when running query", () => {
     const watcher = vi.fn()
     let unsub: () => void
@@ -202,22 +243,6 @@ describe("createQuery", () => {
           error,
         })
       })
-    })
-
-    it("passes the context to Apollo", async () => {
-      expect.assertions(1)
-
-      const query = createQuery({ client, document, context: { key: "value" } })
-      const mock = { request: { query: document }, result: { data: { value: "test" } } }
-
-      const spy = vi.spyOn(client, "query")
-      client.setLink(new MockLink([mock]))
-
-      const scope = fork()
-
-      await allSettled(query.start, { scope })
-
-      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ context: { key: "value" } }))
     })
 
     it("uses the client from store", async () => {

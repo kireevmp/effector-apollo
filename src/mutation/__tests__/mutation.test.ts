@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { allSettled, createStore, fork } from "effector"
 
 import { ApolloClient, InMemoryCache, type TypedDocumentNode, gql } from "@apollo/client"
-import { MockLink } from "@apollo/client/testing"
+import { MockLink, type MockedResponse } from "@apollo/client/testing"
 
 import { createMutation } from "../mutation"
 
@@ -61,20 +61,45 @@ describe("createMutation", () => {
     unsub()
   })
 
-  it("passes the context to Apollo", async () => {
-    expect.assertions(1)
+  describe("context", () => {
+    const mock: MockedResponse = {
+      request: { query: document },
+      result: { data: { value: "test" } },
+      maxUsageCount: Infinity,
+    }
 
-    const mutation = createMutation({ client, document, context: { key: "value" } })
-    const mock = { request: { query: document }, result: { data: { value: "test" } } }
+    const link = new MockLink([mock])
 
-    const spy = vi.spyOn(client, "mutate")
-    client.setLink(new MockLink([mock]))
+    beforeEach(() => {
+      client.setLink(link)
+    })
 
-    const scope = fork()
+    it("passes static context", async () => {
+      expect.assertions(1)
 
-    await allSettled(mutation.start, { scope })
+      const mutation = createMutation({ client, document, context: { key: "value" } })
 
-    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ context: { key: "value" } }))
+      const scope = fork()
+
+      await allSettled(mutation.start, { scope })
+
+      const context = link.operation.getContext()
+      expect(context).toStrictEqual(expect.objectContaining({ key: "value" }))
+    })
+
+    it("passes dynamic context", async () => {
+      expect.assertions(1)
+
+      const $context = createStore({ key: "dynamic" })
+      const mutation = createMutation({ client, document, context: $context })
+
+      const scope = fork()
+
+      await allSettled(mutation.start, { scope })
+
+      const context = link.operation.getContext()
+      expect(context).toStrictEqual(expect.objectContaining({ key: "dynamic" }))
+    })
   })
 
   it("uses the client from store", async () => {

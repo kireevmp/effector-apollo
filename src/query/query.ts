@@ -32,7 +32,7 @@ interface CreateQueryOptions<Data, Variables> {
   document: DocumentNode | TypedDocumentNode<Data, Variables>
 
   /** Context passed to your Apollo Link. */
-  context?: DefaultContext
+  context?: DefaultContext | Store<DefaultContext>
 
   /** The name of your query. Will be derived from `document` if abscent. */
   name?: string
@@ -96,7 +96,6 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
 }: CreateQueryOptions<Data, Variables>): Query<Data, Variables> {
   const options: QueryOptions<Variables, Data> = {
     query: document,
-    context,
     returnPartialData: false,
     canonizeResults: true,
   }
@@ -104,6 +103,7 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
   const push = createEvent<Data | null>({ name: `${name}.push` })
 
   const $client = storify(client, { sid: `apollo.${name}.$client`, name: `${name}.client` })
+  const $context = storify(context, { sid: `apollo.${name}.$context`, name: `${name}.context` })
 
   const $data = createStore<Data | null>(null, {
     name: `${name}.data`,
@@ -118,11 +118,12 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
   })
 
   const handler = attach({
-    source: { client: $client },
-    effect: ({ client }, { variables, meta }: ExecutionParams<Variables, QueryMeta>) =>
-      client
-        .query({ ...options, variables, fetchPolicy: meta.force ? "network-only" : "cache-first" })
-        .then(({ data }) => data),
+    source: { client: $client, context: $context },
+    effect: ({ client, context }, { variables, meta }: ExecutionParams<Variables, QueryMeta>) => {
+      const fetchPolicy = meta.force ? "network-only" : "cache-first"
+
+      return client.query({ ...options, context, variables, fetchPolicy }).then(({ data }) => data)
+    },
   })
 
   const operation = createRemoteOperation<Data, Variables, QueryMeta>({ name, handler })

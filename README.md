@@ -25,7 +25,7 @@ Creates a new query that allows you to read data from GraphQL server or cache on
 
 - `client`: `ApolloClient | Store<ApolloClient>` that the query will use to fetch data
 - `document`: `DocumentNode` describing your query
-- `context`: `DefaultContext?` allows you to (optionally) provide arbitrary context to your Apollo Link
+- `context?`: `DefaultContext | Store<DefaultContext>` allows you to provide arbitrary context to your Apollo Link
 
 **Returns:** a new `Query` instance
 
@@ -83,7 +83,7 @@ Creates a new mutation to modify data on your GraphQL server.
 
 - `client`: `ApolloClient | Store<ApolloClient>` that the mutation will use to fetch data
 - `document`: `DocumentNode` describing your mutation
-- `context`: `DefaultContext?` allows you to (optionally) provide arbitrary context to your Apollo Link
+- `context?`: `DefaultContext | Store<DefaultContext>` allows you to provide arbitrary context to your Apollo Link
 
 **Returns:** a new `Mutation` instance
 
