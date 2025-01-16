@@ -13,6 +13,8 @@ export default defineConfig(async () => {
 
         pool: "threads",
         isolate: false,
+
+        typecheck: { enabled: true }
       },
     }),
   )

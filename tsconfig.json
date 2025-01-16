@@ -1,15 +1,26 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
-    "sourceMap": true,
-    "declaration": true,
-    "target": "ES2018",
-    "moduleResolution": "Node",
-    "verbatimModuleSyntax": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
+
+    "target": "ES2022",
+
+    "allowJs": true,
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+
+    "module": "preserve",
+    "noEmit": true,
+
+    "lib": ["ES2022"],
+
     "baseUrl": "."
   },
   "include": ["src"]
