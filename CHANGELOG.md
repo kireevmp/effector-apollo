@@ -1,5 +1,17 @@
 # effector-apollo
 
+## 0.7.0
+
+### Minor Changes
+
+- 40d7d65: Support `Store` as context for `Query` and `Mutation`
+
+### Patch Changes
+
+- 23a93ed: Update dependencies
+- ba55c68: Improve `Query` tests
+- 40d9d6b: Update tsconfig
+
 ## 0.6.0
 
 ### Minor Changes
