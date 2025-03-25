@@ -1,6 +1,7 @@
 import { type Store, attach, createEvent, sample, scopeBind } from "effector"
 
-import type { ApolloClient, Cache } from "@apollo/client"
+import { type ApolloClient, Cache, type OperationVariables } from "@apollo/client"
+import type { QueryManager } from "@apollo/client/core/QueryManager"
 
 import { storify } from "../lib/storify"
 import { setupSubscription } from "../setup_subscription"
@@ -40,7 +41,7 @@ interface WatchQueryOptions {
  * `$data` upon request. `watchQuery` changes that so your `Query`
  * behaves more like Apollo Client's React hooks.
  */
-export function watchQuery<Data, Variables>(
+export function watchQuery<Data, Variables extends OperationVariables = OperationVariables>(
   query: Query<Data, Variables>,
   {
     client = query.meta.client,
@@ -58,14 +59,25 @@ export function watchQuery<Data, Variables>(
   const $client = storify(client, { name: `${name}.client`, sid: `apollo.${name}.$client` })
 
   const updated = createEvent<Cache.DiffResult<Data>>({ name: `${name}.updated` })
-  const received = sample({ clock: updated, filter: ({ complete }) => Boolean(complete) })
 
   const subscribeFx = attach({
-    name: `${name}.subscriber`,
+    name: `${name}.subscribe`,
     source: { variables: query.__.$variables, client: $client },
     effect({ variables, client }) {
       const callback = scopeBind(updated, { safe: true })
+
       return client.cache.watch({ ...options, variables, callback })
+    },
+  })
+
+  const maskFx = attach({
+    name: `${name}.mask`,
+    source: { client: $client },
+    effect: ({ client }, data: Data) => {
+      // @ts-expect-error: private member
+      const manager = client.queryManager as QueryManager<unknown>
+
+      return manager.maskOperation({ data, document: query.meta.document, id: name })
     },
   })
 
@@ -80,12 +92,22 @@ export function watchQuery<Data, Variables>(
   })
 
   /**
-   * When cache is updated, push new data into query.
-   * We only push complete updates, and ignore "partial" data.
-   * We must request partial data to be able to always subscribe. */
+   * When cache is updated, attempt to mask it
+   * using client settings.
+   */
   sample({
-    clock: received,
+    clock: updated,
+    filter: ({ complete }) => Boolean(complete),
     fn: ({ result }) => result!,
+    target: maskFx,
+  })
+
+  /**
+   * Once extraction & masking is complete,
+   * push data into the query.
+   */
+  sample({
+    clock: maskFx.doneData,
     target: query.__.push,
   })
 

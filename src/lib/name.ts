@@ -11,9 +11,6 @@ export function operationName(document: DocumentNode): string | null {
 
 export function fragmentName(document: DocumentNode): string | null {
   return (
-    document.definitions.find(
-      (node): node is OperationDefinitionNode =>
-        node.kind === Kind.FRAGMENT_DEFINITION && !!node.name,
-    )?.name?.value ?? null
+    document.definitions.find((node) => node.kind === Kind.FRAGMENT_DEFINITION)?.name?.value ?? null
   )
 }

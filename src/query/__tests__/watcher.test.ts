@@ -85,7 +85,7 @@ describe("watchQuery", () => {
     })
   })
 
-  it("suppots watching other client", async () => {
+  it("supports watching other client", async () => {
     expect.assertions(1)
 
     const otherCache = new InMemoryCache()
@@ -259,6 +259,81 @@ describe("watchQuery", () => {
 
       const data = scope.getState(query.$data)
       expect(data).toStrictEqual({ value: "old" })
+    })
+  })
+
+  describe("with masking", () => {
+    const document = gql`
+      query {
+        entity {
+          id
+          top
+          ...data
+        }
+      }
+
+      fragment data on Entity {
+        value
+      }
+    `
+
+    const initial = { __typename: "Entity", id: 1, value: "initial", top: "initial" }
+    const mock = { request: { query: document }, result: { data: { entity: initial } } }
+
+    const client = new ApolloClient({ link: link, dataMasking: true, cache })
+
+    beforeEach(async () => {
+      client.setLink(new MockLink([mock]))
+
+      await client.cache.reset({ discardWatches: true })
+    })
+
+    it("updates query with correctly masked data", async () => {
+      expect.assertions(1)
+
+      const query = createQuery<unknown, Record<string, never>>({ client: client, document })
+      watchQuery(query)
+
+      const scope = fork()
+      await allSettled(query.start, { scope })
+
+      const current = { __typename: "Entity", id: 1, value: "updated", top: "updated" }
+      cache.writeQuery({ query: document, data: { entity: current } })
+
+      const data = scope.getState(query.$data)
+      expect(data).toHaveProperty("entity", { __typename: "Entity", id: 1, top: "updated" }) // no value
+    })
+
+    describe("with explicit unmask directive", () => {
+      it("updates query with unmasked data", async () => {
+        expect.assertions(1)
+
+        const document = gql`
+          query {
+            entity {
+              id
+              top
+              ...data @unmask
+            }
+          }
+
+          fragment data on Entity {
+            value
+          }
+        `
+
+        const query = createQuery<unknown, Record<string, never>>({ client, document })
+        watchQuery(query)
+
+        const scope = fork()
+        await allSettled(query.start, { scope })
+
+        const current = { __typename: "Entity", id: 1, value: "updated", top: "updated" }
+        cache.writeQuery({ query: document, data: { entity: current } })
+
+        const data = scope.getState(query.$data)
+        expect(data).toHaveProperty("entity", current)
+      })
     })
   })
 })

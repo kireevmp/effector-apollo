@@ -1,4 +1,8 @@
-import { type EventCallable, type EventCallableAsReturnType, createEvent, sample } from "effector"
+import { type EventCallableAsReturnType, type Store, createEvent, sample } from "effector"
+
+import type { OperationVariables } from "@apollo/client"
+
+import type { Optional } from "src/lib/optional"
 
 import { not } from "../lib/not"
 
@@ -33,19 +37,19 @@ import type { Query } from "./query"
  *
  * @returns Event to trigger pagination
  */
-export function paginate<Variables>(
+export function paginate<Variables extends OperationVariables = OperationVariables>(
   query: Query<any, Variables>,
 ): EventCallableAsReturnType<Partial<Variables>> {
   const paginate = createEvent<Partial<Variables>>({ name: `${query.meta.name}.paginate` })
 
   sample({
     clock: paginate,
-    source: query.__.$variables,
+    source: query.__.$variables as Store<Optional<Variables>>,
     fn: (original, override) => ({ ...original, ...override }),
     // We can't paginate idle queries that have no variables yet
     filter: not(query.$idle),
     // force a network request for pagination
-    target: query.start as EventCallable<Variables>,
+    target: query.start,
   })
 
   return paginate

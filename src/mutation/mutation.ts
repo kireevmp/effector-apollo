@@ -4,6 +4,7 @@ import type {
   ApolloClient,
   DefaultContext,
   DocumentNode,
+  MaybeMasked,
   OperationVariables,
   TypedDocumentNode,
 } from "@apollo/client"
@@ -35,9 +36,14 @@ interface CreateMutationOptions<Data, Variables> {
 
 export type MutationMeta = void
 
-type MutationInternals<Data, Variables> = RemoteOperationInternals<Data, Variables, MutationMeta>
+type MutationInternals<Data, Variables> = RemoteOperationInternals<
+  MaybeMasked<Data>,
+  Variables,
+  MutationMeta
+>
 
-export interface Mutation<Data, Variables> extends RemoteOperation<Data, Variables, MutationMeta> {
+export interface Mutation<Data, Variables>
+  extends RemoteOperation<MaybeMasked<Data>, Variables, MutationMeta> {
   /** Run this Mutation against the GraphQL server. */
   start: EventCallable<Optional<Variables>>
 
@@ -60,6 +66,8 @@ export function createMutation<Data, Variables extends OperationVariables = Oper
 
   name = operationName(document) || "unknown",
 }: CreateMutationOptions<Data, Variables>): Mutation<Data, Variables> {
+  type ResolvedData = MaybeMasked<Data>
+
   const $client = storify(client, { name: `${name}.client`, sid: `apollo.${name}.$client` })
 
   const $context = storify(context, { name: `${name}.context`, sid: `apollo.${name}.$context` })
@@ -72,7 +80,7 @@ export function createMutation<Data, Variables extends OperationVariables = Oper
         .then(({ data }) => data!),
   })
 
-  const operation = createRemoteOperation<Data, Variables, MutationMeta>({ handler, name })
+  const operation = createRemoteOperation<ResolvedData, Variables, MutationMeta>({ name, handler })
 
   const start = createEvent<Variables>({ name: `${name}.start` })
 

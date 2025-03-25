@@ -1,13 +1,14 @@
 import { type EventCallable, type Store, attach, createEvent, createStore, sample } from "effector"
 
-import type {
-  ApolloClient,
-  ApolloError,
-  DefaultContext,
-  DocumentNode,
-  OperationVariables,
-  QueryOptions,
-  TypedDocumentNode,
+import {
+  type ApolloClient,
+  type ApolloError,
+  type DefaultContext,
+  type DocumentNode,
+  type MaybeMasked,
+  type OperationVariables,
+  type QueryOptions,
+  type TypedDocumentNode,
 } from "@apollo/client"
 
 import { operationName } from "../lib/name"
@@ -39,11 +40,12 @@ interface CreateQueryOptions<Data, Variables> {
 }
 
 export interface QueryInternals<Data, Variables>
-  extends RemoteOperationInternals<Data, Variables, QueryMeta> {
-  push: EventCallable<Data | null>
+  extends RemoteOperationInternals<MaybeMasked<Data>, Variables, QueryMeta> {
+  push: EventCallable<MaybeMasked<Data> | null>
 }
 
-export interface Query<Data, Variables> extends RemoteOperation<Data, Variables, QueryMeta> {
+export interface Query<Data, Variables extends OperationVariables>
+  extends RemoteOperation<MaybeMasked<Data>, Variables, QueryMeta> {
   /** Start fetching data unconditionally. */
   start: EventCallable<Optional<Variables>>
   /** Start fetching data if it is absent or stale. */
@@ -57,7 +59,7 @@ export interface Query<Data, Variables> extends RemoteOperation<Data, Variables,
    * If there was an error during fetching, or if there was no request yet,
    * this store will be `null`.
    */
-  $data: Store<Data | null>
+  $data: Store<MaybeMasked<Data> | null>
   /**
    * Latest {@link Query} error.
    *
@@ -94,18 +96,20 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
 
   name = operationName(document) || "unknown",
 }: CreateQueryOptions<Data, Variables>): Query<Data, Variables> {
+  type ResolvedData = MaybeMasked<Data>
+
   const options: QueryOptions<Variables, Data> = {
     query: document,
     returnPartialData: false,
     canonizeResults: true,
   }
 
-  const push = createEvent<Data | null>({ name: `${name}.push` })
+  const push = createEvent<ResolvedData | null>({ name: `${name}.push` })
 
   const $client = storify(client, { sid: `apollo.${name}.$client`, name: `${name}.client` })
   const $context = storify(context, { sid: `apollo.${name}.$context`, name: `${name}.context` })
 
-  const $data = createStore<Data | null>(null, {
+  const $data = createStore<ResolvedData | null>(null, {
     name: `${name}.data`,
     sid: `apollo.${name}.$data`,
     skipVoid: false,
@@ -126,7 +130,7 @@ export function createQuery<Data, Variables extends OperationVariables = Operati
     },
   })
 
-  const operation = createRemoteOperation<Data, Variables, QueryMeta>({ name, handler })
+  const operation = createRemoteOperation<ResolvedData, Variables, QueryMeta>({ name, handler })
 
   const controller = createQueryController({ operation, name })
 

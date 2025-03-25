@@ -73,7 +73,7 @@ export type OperationResult<Q extends RemoteOperation<any, any, any>> = EffectRe
   Q["__"]["executeFx"]
 >
 
-export function createRemoteOperation<Data, Variables, Meta>({
+export function createRemoteOperation</* opaque */ Data, Variables, Meta>({
   handler,
 
   name = "unknown",

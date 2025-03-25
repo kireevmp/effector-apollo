@@ -1,6 +1,6 @@
 import { type Store, attach, sample } from "effector"
 
-import type { ApolloClient, DocumentNode } from "@apollo/client"
+import type { ApolloClient, DocumentNode, Unmasked } from "@apollo/client"
 import { Kind, OperationTypeNode } from "graphql"
 
 import { storify } from "../lib/storify"
@@ -10,7 +10,7 @@ import type { Mutation } from "./mutation"
 interface OptimisticOptions<Data, Variables> {
   client?: ApolloClient<unknown> | Store<ApolloClient<unknown>>
 
-  fn: (variables: Variables) => Data
+  fn: (variables: Variables) => Unmasked<Data>
 }
 
 export function optimistic<Data, Variables>(
@@ -25,7 +25,7 @@ export function optimistic<Data, Variables>(
   const updateFx = attach({
     source: { client: $client, variables: mutation.__.$variables },
     name: `${mutation.meta.name}.optimistic`,
-    effect({ variables, client: { cache } }, req: Promise<Data>) {
+    effect({ variables, client: { cache } }, req: Promise<unknown>) {
       const id = nextID()
 
       cache.recordOptimisticTransaction(

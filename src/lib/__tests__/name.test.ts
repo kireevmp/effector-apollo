@@ -7,12 +7,12 @@ import { fragmentName } from "../name"
 describe("fragmentName", () => {
   it("derives name from fragment", () => {
     const document = gql`
-      fragment test on Example {
+      fragment example on Example {
         value
       }
     `
 
-    expect(fragmentName(document)).toBe("test")
+    expect(fragmentName(document)).toBe("example")
   })
 
   it("does not throw on documents without fragments", () => {

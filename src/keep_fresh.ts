@@ -1,7 +1,10 @@
 import { type Event, type EventCallable, type Store, createStore, is, sample } from "effector"
 
+import type { OperationVariables } from "@apollo/client"
+
 import { divide } from "./lib/divide"
 import { not } from "./lib/not"
+import type { Optional } from "./lib/optional"
 import { storify } from "./lib/storify"
 import type { Query } from "./query/query"
 
@@ -44,7 +47,7 @@ interface KeepFreshOptions {
  * @param query - The Query you want to keep fresh.
  * @param options - Options for customizing the refresh behavior.
  */
-export function keepFresh<Data, Variables>(
+export function keepFresh<Data, Variables extends OperationVariables = OperationVariables>(
   query: Query<Data, Variables>,
   { enabled, triggers }: KeepFreshOptions,
 ) {
@@ -89,9 +92,9 @@ export function keepFresh<Data, Variables>(
 
   sample({
     clock: refresh,
-    source: query.__.$variables,
+    source: query.__.$variables as Store<Optional<Variables>>,
     filter: not(query.$idle),
     // query.refresh would read cache, but we want to force a request
-    target: query.start as EventCallable<Variables>,
+    target: query.start,
   })
 }

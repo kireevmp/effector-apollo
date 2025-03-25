@@ -14,7 +14,7 @@ import { MockLink, type MockedResponse } from "@apollo/client/testing"
 import { createQuery } from "../query"
 
 describe("createQuery", () => {
-  const document: TypedDocumentNode<unknown, Record<string, never>> = gql`
+  const document: TypedDocumentNode<{ value: string }, Record<string, never>> = gql`
     query test {
       value
     }

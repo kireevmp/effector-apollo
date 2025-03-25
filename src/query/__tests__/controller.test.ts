@@ -9,7 +9,7 @@ describe("createQueryController", () => {
   const handler = vi.fn().mockResolvedValue({ data: "result" })
   const operation = createRemoteOperation<unknown, unknown, QueryMeta>({ handler })
 
-  const controller = createQueryController({ operation })
+  const controller = createQueryController({ operation, name: "unknown" })
 
   beforeEach(() => {
     handler.mockClear()

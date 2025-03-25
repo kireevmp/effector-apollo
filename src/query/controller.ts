@@ -9,7 +9,7 @@ export interface QueryMeta {
 interface QueryControllerOptions<Data, Variables> {
   operation: RemoteOperation<Data, Variables, QueryMeta>
 
-  name?: string
+  name: string
 }
 
 export interface QueryController<Variables> {
@@ -19,7 +19,7 @@ export interface QueryController<Variables> {
 
 export function createQueryController<Data, Variables>({
   operation,
-  name = "unknown",
+  name,
 }: QueryControllerOptions<Data, Variables>): QueryController<Variables> {
   const start = createEvent<Variables>({ name: `${name}.start` })
   const refresh = createEvent<Variables>({ name: `${name}.refresh` })
