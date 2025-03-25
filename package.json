@@ -31,32 +31,32 @@
     "test:types": "vitest run --typecheck.only"
   },
   "dependencies": {
-    "graphql": "^16.9.0"
+    "graphql": "^16.10.0"
   },
   "devDependencies": {
     "@apollo/client": "~3.11.10",
-    "@changesets/cli": "^2.27.11",
-    "@eslint/js": "^9.18.0",
+    "@changesets/cli": "^2.28.1",
+    "@eslint/js": "^9.23.0",
     "@types/eslint": "^9.6.1",
-    "@typescript-eslint/parser": "^8.20.0",
-    "@vitest/coverage-istanbul": "^2.1.8",
-    "effector": "^23.2.3",
-    "eslint": "^9.18.0",
-    "eslint-import-resolver-typescript": "^3.7.0",
-    "eslint-plugin-import-x": "^4.6.1",
-    "eslint-plugin-prettier": "^5.2.2",
+    "@typescript-eslint/parser": "^8.28.0",
+    "@vitest/coverage-istanbul": "^3.0.9",
+    "effector": "^23.3.0",
+    "eslint": "^9.23.0",
+    "eslint-import-resolver-typescript": "^4.2.3",
+    "eslint-plugin-import-x": "^4.9.2",
+    "eslint-plugin-prettier": "^5.2.5",
     "husky": "^9.1.7",
     "patronum": "^2.3.0",
-    "prettier": "^3.4.2",
+    "prettier": "^3.5.3",
     "react": "^18.3.1",
-    "smartbundle": "^0.13.1",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
-    "vitest": "^2.1.8"
+    "smartbundle": "^0.14.1",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.28.0",
+    "vitest": "^3.0.9"
   },
   "peerDependencies": {
     "@apollo/client": "^3.6.0",
     "effector": "^23.0.0"
   },
-  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee"
+  "packageManager": "pnpm@10.6.5+sha512.cdf928fca20832cd59ec53826492b7dc25dc524d4370b6b4adbf65803d32efaa6c1c88147c0ae4e8d579a6c9eec715757b50d4fa35eea179d868eada4ed043af"
 }
