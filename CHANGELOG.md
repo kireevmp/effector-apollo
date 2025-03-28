@@ -1,5 +1,15 @@
 # effector-apollo
 
+## 0.8.0
+
+### Minor Changes
+
+- 8638a92: Support Fragment Masking (`@apollo/client@^3.12.0`)
+
+### Patch Changes
+
+- e1a1cfa: Update dependencies
+
 ## 0.7.0
 
 ### Minor Changes
